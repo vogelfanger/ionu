@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="@dimen/list_content_margin"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Alarm enabled row -->
+
+    <TextView
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:id="@+id/alarm_enabled_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/fab_margin"
+            android:layout_marginVertical="@dimen/list_content_margin"
+            android:text="@string/alarm_enabled_title"
+            android:textSize="@dimen/alarm_list_item_text_size"/>
+
+    <Switch app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBaseline_toBaselineOf="@id/alarm_enabled_title"
+            android:id="@+id/alarm_enabled_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/fab_margin"/>
+
+    <!-- Start time row -->
+
+    <TextView
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/alarm_enabled_title"
+            android:id="@+id/alarm_start_time_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/fab_margin"
+            android:layout_marginVertical="@dimen/list_content_margin"
+            android:text="@string/alarm_start_time_title"
+            android:textSize="@dimen/alarm_list_item_text_size"/>
+
+    <TextView
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBaseline_toBaselineOf="@id/alarm_start_time_title"
+            android:id="@+id/alarm_start_time_interaction_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/fab_margin"
+            android:text="14:00"
+            android:textColor="@color/colorAccent"
+            android:textSize="@dimen/alarm_list_item_text_size"/>
+
+    <!-- End time row -->
+
+    <TextView
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/alarm_start_time_title"
+            android:id="@+id/alarm_end_time_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/fab_margin"
+            android:layout_marginVertical="@dimen/list_content_margin"
+            android:text="@string/alarm_end_time_title"
+            android:textSize="@dimen/alarm_list_item_text_size"/>
+
+    <TextView
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBaseline_toBaselineOf="@id/alarm_end_time_title"
+            android:id="@+id/alarm_end_time_interaction_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/fab_margin"
+            android:text="16:45"
+            android:textColor="@color/colorAccent"
+            android:textSize="@dimen/alarm_list_item_text_size"/>
+
+    <!-- Custom message -->
+
+    <TextView
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/alarm_end_time_title"
+            android:id="@+id/alarm_custom_message_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/fab_margin"
+            android:layout_marginVertical="@dimen/list_content_margin"
+            android:text="@string/alarm_custom_message_title"
+            android:textSize="@dimen/alarm_list_item_text_size"/>
+
+    <EditText
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/alarm_custom_message_title"
+            android:id="@+id/alarm_custom_message_edit_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/fab_margin"
+            android:layout_marginVertical="@dimen/fab_margin"
+            android:hint="@string/alarm_custom_message_hint"
+            android:textSize="@dimen/alarm_list_item_text_size"/>
+
+</android.support.constraint.ConstraintLayout>

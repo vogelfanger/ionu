@@ -1,5 +1,7 @@
 package com.ionu
 
+import android.support.v4.app.FragmentManager
+import android.support.v4.app.FragmentTransaction
 import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
@@ -8,9 +10,8 @@ import android.view.ViewGroup
 import android.widget.Switch
 import android.widget.TextView
 
-class AlarmsAdapter(private val myDataset: List<String>):
+class AlarmsAdapter(private val myDataset: List<String>, private val fragmentManager: FragmentManager?):
     RecyclerView.Adapter<AlarmsAdapter.AlarmViewHolder>() {
-
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlarmViewHolder {
         val alarmView = LayoutInflater.from(parent.context)
@@ -27,6 +28,15 @@ class AlarmsAdapter(private val myDataset: List<String>):
 
         // TODO set alarm text and switch values based on the dataset
         holder.alarmText.text = myDataset[position]
+        // open a fragment showing details of the alarm period
+        holder.alarmText.setOnClickListener(
+            View.OnClickListener {
+                // Replace  AlarmPeriodFragment
+                val transaction : FragmentTransaction? = fragmentManager?.beginTransaction()
+                transaction?.replace(R.id.page_root_frame, AlarmPeriodFragment())
+                transaction?.addToBackStack(null)
+                transaction?.commit()
+            })
     }
 
     // construct a viewholder

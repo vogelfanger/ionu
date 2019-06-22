@@ -56,7 +56,7 @@ class AlarmsFragment : Fragment() {
         val placeholderAlarms: List<String> = listOf("11:00-12:30", "13:00-14:15",
             "14:30-16:00", "19:00-20:30", "20:30-20:45", "21:00-21:15", "21:45-22:15", "22:30-23:00")
 
-        mViewAdapter = AlarmsAdapter(placeholderAlarms)
+        mViewAdapter = AlarmsAdapter(placeholderAlarms, fragmentManager)
         mRecyclerView = alarms_recycler_view.apply{
             // recycler view size doesn't change, set fixed to improve performance
             setHasFixedSize(true)

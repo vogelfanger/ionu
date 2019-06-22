@@ -5,4 +5,10 @@
     <string name="tab_text_alarms">Alarms</string>
     <string name="tab_text_history">History</string>
 
+    <string name="alarm_enabled_title">Enabled:</string>
+    <string name="alarm_start_time_title">Start:</string>
+    <string name="alarm_end_time_title">End:</string>
+    <string name="alarm_custom_message_title">Notification message:</string>
+    <string name="alarm_custom_message_hint">Add a custom message, be polite :)</string>
+
 </resources>

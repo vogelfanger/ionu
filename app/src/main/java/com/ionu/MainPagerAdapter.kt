@@ -13,7 +13,8 @@ class MainPagerAdapter(fm: FragmentManager, context: Context) : FragmentPagerAda
     override fun getItem(position: Int): Fragment {
         // TODO add return for other fragments when they are implemented
         when(position){
-            0 -> return AlarmsFragment.newInstance("uselessString")
+            //TODO use a root fragment instead so it can be replaced later
+            0 -> return PageRootFragment()
             else -> {
                 return AlarmsFragment.newInstance("uselessString")
             }
