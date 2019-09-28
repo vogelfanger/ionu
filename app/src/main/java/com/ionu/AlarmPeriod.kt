@@ -1,27 +1,58 @@
 package com.ionu
 
-class AlarmPeriod(startHours: Int, startMinutes: Int,
-                  endHours: Int, endMinutes: Int) {
+import io.realm.RealmObject
+import io.realm.annotations.PrimaryKey
+import io.realm.annotations.Required
+import java.util.*
 
-    var startTime: ClockTime
-    var endTime: ClockTime
+open class AlarmPeriod() : RealmObject() {
 
-    init{
-        startTime = ClockTime(startHours, startMinutes)
-        endTime = ClockTime(endHours, endMinutes)
+    @PrimaryKey
+    @Required
+    var id : String
+    var enabled : Boolean = false
+    var startHours : Int
+    var startMinutes : Int
+    var endHours : Int
+    var endMinutes : Int
+    var message : String
+
+    // set default values in case primary constructor is used
+    init {
+        id = UUID.randomUUID().toString()
+        startHours = 0
+        startMinutes = 0
+        endHours = 0
+        endMinutes = 0
+        message = "";
     }
 
-    // Representation of clock time as number of hours and minutes (0-23h, 0-59min)
-    class ClockTime(var hours: Int, var minutes: Int){
+    constructor(startHours: Int, startMinutes: Int, endHours: Int, endMinutes: Int) : this(){
+        this.startHours = validateHours(startHours)
+        this.startMinutes = validateMinutes(startMinutes)
+        this.endHours = validateHours(endHours)
+        this.endMinutes = validateMinutes(endMinutes)
+    }
 
-        // force input to valid clock time
-        init {
-            if(hours > 23 || hours < 0) {
-                hours = 0
-            }
-            if(minutes > 59 || minutes < 0) {
-                minutes = 0
-            }
-        }
+    fun clockTimesAsString() : String{
+        return ("" + timeToString(startHours) + ":" + timeToString(startMinutes) +
+                "-" + timeToString(endHours) + ":" + timeToString(endMinutes))
+    }
+
+    private fun timeToString(time: Int) : String{
+        if(time == 0) return "00"
+        else return time.toString()
+    }
+
+    private fun validateHours(hours: Int) : Int{
+        if(hours > 23 || hours < 0){
+            return 0
+        }else return hours
+    }
+
+    private fun validateMinutes(minutes: Int) : Int{
+        if(minutes > 59 || minutes < 0){
+            return 0
+        }else return minutes
     }
 }

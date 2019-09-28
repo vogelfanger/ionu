@@ -1,17 +1,18 @@
 package com.ionu
 
-import android.support.v4.app.FragmentManager
-import android.support.v4.app.FragmentTransaction
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Switch
 import android.widget.TextView
+import io.realm.OrderedRealmCollection
+import io.realm.RealmRecyclerViewAdapter
 
-class AlarmsAdapter(private val myDataset: List<String>, private val fragmentManager: FragmentManager?):
-    RecyclerView.Adapter<AlarmsAdapter.AlarmViewHolder>() {
+class AlarmsAdapter(private val mListener: OnAlarmItemClickListener,
+                    private val mDataset : OrderedRealmCollection<AlarmPeriod>):
+                        RealmRecyclerViewAdapter<AlarmPeriod, AlarmsAdapter.AlarmViewHolder>(
+                            mDataset, true) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlarmViewHolder {
         val alarmView = LayoutInflater.from(parent.context)
@@ -19,24 +20,19 @@ class AlarmsAdapter(private val myDataset: List<String>, private val fragmentMan
         return AlarmViewHolder(alarmView)
     }
 
-    override fun getItemCount(): Int = myDataset.size
+    override fun getItemCount(): Int = mDataset.size
 
     // populate view with data
     override fun onBindViewHolder(holder: AlarmViewHolder, position: Int) {
-        // - get element from your dataset at this position
-        // - replace the contents of the view with that element
 
-        // TODO set alarm text and switch values based on the dataset
-        holder.alarmText.text = myDataset[position]
-        // open a fragment showing details of the alarm period
-        holder.alarmText.setOnClickListener(
-            View.OnClickListener {
-                // Replace  AlarmPeriodFragment
-                val transaction : FragmentTransaction? = fragmentManager?.beginTransaction()
-                transaction?.replace(R.id.page_root_frame, AlarmPeriodFragment())
-                transaction?.addToBackStack(null)
-                transaction?.commit()
-            })
+        holder.alarmText.text = mDataset.get(position).clockTimesAsString()
+        holder.alarmText.setOnClickListener{
+            mListener.onAlarmTextClicked(mDataset.get(position))
+        }
+        holder.alarmSwitch.isChecked = mDataset.get(position).enabled
+        holder.alarmSwitch.setOnCheckedChangeListener{ view, isChecked ->
+            mListener.onAlarmSwitchToggled(mDataset.get(position))
+        }
     }
 
     // construct a viewholder
@@ -50,4 +46,10 @@ class AlarmsAdapter(private val myDataset: List<String>, private val fragmentMan
             alarmText = alarmView.findViewById(R.id.alarm_time_view)
         }
     }
+
+    interface OnAlarmItemClickListener {
+        fun onAlarmSwitchToggled(item : AlarmPeriod)
+        fun onAlarmTextClicked(item : AlarmPeriod)
+    }
+
 }

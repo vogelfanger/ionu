@@ -3,10 +3,14 @@ package com.ionu
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.design.widget.TabLayout
+
+import android.support.v4.app.FragmentTransaction
 import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import io.realm.Realm
 
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -28,7 +32,13 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
         tabLayout.setupWithViewPager(mViewPager)
 
         fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+            // TODO use current clock time as AlarmPeriod parameter
+            // Insert new alarm to Realm, fragments will update the change on their own
+            val alarm = AlarmPeriod()
+            Realm.getDefaultInstance().use{
+                it.executeTransaction(Realm.Transaction {it.insert(alarm)})
+            }
+            Snackbar.make(view, "New alarm saved", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
         }
     }
@@ -49,7 +59,18 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
         }
     }
 
-    override fun onAlarmsFragmentInteraction() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun onAlarmSelected(alarmPeriod : AlarmPeriod) {
+        Log.d("MainActivity", "onAlarmSelected()")
+        // Show alarm details in another fragment
+        val bundle : Bundle = Bundle()
+        //TODO change key to global variable
+        bundle.putString("alarm_period_id_bundle", alarmPeriod.id)
+        val alarmFragment : AlarmPeriodFragment = AlarmPeriodFragment()
+        alarmFragment.arguments = bundle
+
+        val transaction : FragmentTransaction? = supportFragmentManager.beginTransaction()
+        transaction?.replace(R.id.page_root_frame, alarmFragment)
+        transaction?.addToBackStack(null)
+        transaction?.commit()
     }
 }

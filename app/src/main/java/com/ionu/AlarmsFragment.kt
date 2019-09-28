@@ -10,6 +10,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import io.realm.Realm
+import io.realm.RealmRecyclerViewAdapter
 import kotlinx.android.synthetic.main.fragment_alarms.*
 
 
@@ -26,13 +28,13 @@ private const val ARG_PARAM2 = "param2"
  * create an instance of this fragment.
  *
  */
-class AlarmsFragment : Fragment() {
+class AlarmsFragment : Fragment(), AlarmsAdapter.OnAlarmItemClickListener {
     // TODO: Rename and change types of parameters
-    private var mAlarmData: List<String>? = null
     private var param2: String? = null
     private var mListener: OnAlarmsFragmentListener? = null
+    private lateinit var mRealm : Realm
     private lateinit var mRecyclerView: RecyclerView
-    private lateinit var mViewAdapter: RecyclerView.Adapter<*>
+    private lateinit var mViewAdapter: RealmRecyclerViewAdapter<AlarmPeriod, AlarmsAdapter.AlarmViewHolder>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,22 +54,26 @@ class AlarmsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val linearLayoutManager = LinearLayoutManager(context)
 
-        //TODO remove placeholder list from adapter
-        val placeholderAlarms: List<String> = listOf("11:00-12:30", "13:00-14:15",
-            "14:30-16:00", "19:00-20:30", "20:30-20:45", "21:00-21:15", "21:45-22:15", "22:30-23:00")
+        mRealm = Realm.getDefaultInstance()
 
-        mViewAdapter = AlarmsAdapter(placeholderAlarms, fragmentManager)
+        mViewAdapter = AlarmsAdapter(this,
+            mRealm.where(AlarmPeriod::class.java).findAllAsync())
+
         mRecyclerView = alarms_recycler_view.apply{
-            // recycler view size doesn't change, set fixed to improve performance
-            setHasFixedSize(true)
+            // must set FixedSize to false, otherwise realm adapter will not auto-update
+            setHasFixedSize(false)
             layoutManager = linearLayoutManager
             adapter = mViewAdapter
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        mRealm.close()
+    }
+
     // TODO: Rename method, update argument and hook method into UI event
     fun onButtonPressed(uri: Uri) {
-        mListener?.onAlarmsFragmentInteraction()
     }
 
     override fun onAttach(context: Context) {
@@ -96,8 +102,17 @@ class AlarmsFragment : Fragment() {
      * for more information.
      */
     interface OnAlarmsFragmentListener {
-        // TODO: Update argument type and name
-        fun onAlarmsFragmentInteraction()
+        fun onAlarmSelected(alarmPeriod : AlarmPeriod)
+    }
+
+    override fun onAlarmSwitchToggled(item: AlarmPeriod) {
+        // TODO set alarm item as enabled, update Realm
+
+    }
+
+    override fun onAlarmTextClicked(item: AlarmPeriod) {
+        // Show alarm details in another fragment, let activity handle fragment transaction
+        mListener?.onAlarmSelected(item)
     }
 
     companion object {
