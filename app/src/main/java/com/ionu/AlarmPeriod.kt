@@ -17,7 +17,7 @@ open class AlarmPeriod() : RealmObject() {
     var endMinutes : Int
     var message : String
 
-    // set default values in case primary constructor is used
+    // set default values
     init {
         id = UUID.randomUUID().toString()
         startHours = 0
@@ -36,12 +36,23 @@ open class AlarmPeriod() : RealmObject() {
 
     fun clockTimesAsString() : String{
         return ("" + timeToString(startHours) + ":" + timeToString(startMinutes) +
-                "-" + timeToString(endHours) + ":" + timeToString(endMinutes))
+                " - " + timeToString(endHours) + ":" + timeToString(endMinutes))
+    }
+
+    fun startTimeAsString() : String{
+        return ("" + timeToString(startHours) + ":" + timeToString(startMinutes))
+    }
+
+    fun endTimeAsString() : String{
+        return ("" + timeToString(endHours) + ":" + timeToString(endMinutes))
     }
 
     private fun timeToString(time: Int) : String{
-        if(time == 0) return "00"
-        else return time.toString()
+        var string = ""
+        if(time < 10){
+            string += "0"
+        }
+        return string + time
     }
 
     private fun validateHours(hours: Int) : Int{

@@ -60,12 +60,11 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
     }
 
     override fun onAlarmSelected(alarmPeriod : AlarmPeriod) {
-        Log.d("MainActivity", "onAlarmSelected()")
+        Log.d("MainActivity", "onAlarmSelected(), alarmID: " + alarmPeriod.id)
         // Show alarm details in another fragment
-        val bundle : Bundle = Bundle()
-        //TODO change key to global variable
-        bundle.putString("alarm_period_id_bundle", alarmPeriod.id)
-        val alarmFragment : AlarmPeriodFragment = AlarmPeriodFragment()
+        val bundle = Bundle()
+        bundle.putString(GlobalVariables.ALARM_PERIOD_ID_BUNDLE, alarmPeriod.id)
+        val alarmFragment = AlarmPeriodFragment()
         alarmFragment.arguments = bundle
 
         val transaction : FragmentTransaction? = supportFragmentManager.beginTransaction()

@@ -24,14 +24,17 @@ class AlarmsAdapter(private val mListener: OnAlarmItemClickListener,
 
     // populate view with data
     override fun onBindViewHolder(holder: AlarmViewHolder, position: Int) {
+        // set listeners to null to avoid exceptions when data is changed while recyclerview computes things
+        holder.alarmText.setOnClickListener(null)
+        holder.alarmSwitch.setOnCheckedChangeListener(null)
 
-        holder.alarmText.text = mDataset.get(position).clockTimesAsString()
+        holder.alarmText.text = mDataset[position].clockTimesAsString()
         holder.alarmText.setOnClickListener{
-            mListener.onAlarmTextClicked(mDataset.get(position))
+            mListener.onAlarmTextClicked(mDataset[position])
         }
-        holder.alarmSwitch.isChecked = mDataset.get(position).enabled
+        holder.alarmSwitch.isChecked = mDataset[position].enabled
         holder.alarmSwitch.setOnCheckedChangeListener{ view, isChecked ->
-            mListener.onAlarmSwitchToggled(mDataset.get(position))
+            mListener.onAlarmSwitchToggled(mDataset[position].id, isChecked)
         }
     }
 
@@ -45,10 +48,11 @@ class AlarmsAdapter(private val mListener: OnAlarmItemClickListener,
             alarmSwitch = alarmView.findViewById(R.id.alarm_switch)
             alarmText = alarmView.findViewById(R.id.alarm_time_view)
         }
+
     }
 
     interface OnAlarmItemClickListener {
-        fun onAlarmSwitchToggled(item : AlarmPeriod)
+        fun onAlarmSwitchToggled(alarmID : String, isChecked: Boolean)
         fun onAlarmTextClicked(item : AlarmPeriod)
     }
 

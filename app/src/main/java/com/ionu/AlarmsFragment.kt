@@ -105,9 +105,14 @@ class AlarmsFragment : Fragment(), AlarmsAdapter.OnAlarmItemClickListener {
         fun onAlarmSelected(alarmPeriod : AlarmPeriod)
     }
 
-    override fun onAlarmSwitchToggled(item: AlarmPeriod) {
-        // TODO set alarm item as enabled, update Realm
-
+    override fun onAlarmSwitchToggled(alarmID: String, isChecked: Boolean) {
+        // find selected alarm from Realm and set enabled status
+        mRealm.executeTransaction {
+            var alarm = mRealm.where(AlarmPeriod::class.java).equalTo("id", alarmID).findFirst()
+            alarm?.let {
+                it.enabled = isChecked
+            }
+        }
     }
 
     override fun onAlarmTextClicked(item: AlarmPeriod) {
