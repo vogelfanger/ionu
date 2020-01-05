@@ -32,7 +32,7 @@ class AlarmsFragment : Fragment(), AlarmsAdapter.OnAlarmItemClickListener {
     // TODO: Rename and change types of parameters
     private var param2: String? = null
     private var mListener: OnAlarmsFragmentListener? = null
-    private lateinit var mRealm : Realm
+    private lateinit var mRealm: Realm
     private lateinit var mRecyclerView: RecyclerView
     private lateinit var mViewAdapter: RealmRecyclerViewAdapter<AlarmPeriod, AlarmsAdapter.AlarmViewHolder>
 
@@ -103,16 +103,12 @@ class AlarmsFragment : Fragment(), AlarmsAdapter.OnAlarmItemClickListener {
      */
     interface OnAlarmsFragmentListener {
         fun onAlarmSelected(alarmPeriod : AlarmPeriod)
+        fun onAlarmInListEnabled(alarmID: String, enabled: Boolean)
     }
 
     override fun onAlarmSwitchToggled(alarmID: String, isChecked: Boolean) {
-        // find selected alarm from Realm and set enabled status
-        mRealm.executeTransaction {
-            var alarm = mRealm.where(AlarmPeriod::class.java).equalTo("id", alarmID).findFirst()
-            alarm?.let {
-                it.enabled = isChecked
-            }
-        }
+        // let activity verify alarm
+        mListener?.onAlarmInListEnabled(alarmID, isChecked)
     }
 
     override fun onAlarmTextClicked(item: AlarmPeriod) {

@@ -11,40 +11,47 @@ open class AlarmPeriod() : RealmObject() {
     @Required
     var id : String
     var enabled : Boolean = false
-    var startHours : Int
-    var startMinutes : Int
-    var endHours : Int
-    var endMinutes : Int
     var message : String
 
-    // set default values
+    // start and end time as elapsed minutes from start of day (e.g. 06:30 is 390 minutes)
+    var startMinutes : Int
+    var endMinutes : Int
+
     init {
+        // set default values
         id = UUID.randomUUID().toString()
-        startHours = 0
         startMinutes = 0
-        endHours = 0
         endMinutes = 0
         message = "";
     }
 
-    constructor(startHours: Int, startMinutes: Int, endHours: Int, endMinutes: Int) : this(){
-        this.startHours = validateHours(startHours)
-        this.startMinutes = validateMinutes(startMinutes)
-        this.endHours = validateHours(endHours)
-        this.endMinutes = validateMinutes(endMinutes)
+    constructor(startMinutes: Int, endMinutes: Int) : this(){
+        this.startMinutes = validateTime(startMinutes)
+        this.endMinutes = validateTime(endMinutes)
+    }
+
+    fun lengthInMinutes() : Int{
+        if(startMinutes > endMinutes){
+            return 1440-startMinutes+endMinutes
+        }else{
+            return endMinutes - startMinutes
+        }
     }
 
     fun clockTimesAsString() : String{
-        return ("" + timeToString(startHours) + ":" + timeToString(startMinutes) +
-                " - " + timeToString(endHours) + ":" + timeToString(endMinutes))
+        return startTimeAsString() + " - " +  endTimeAsString()
     }
 
     fun startTimeAsString() : String{
-        return ("" + timeToString(startHours) + ":" + timeToString(startMinutes))
+        val startHour : Int = startMinutes/60
+        val startMinute : Int = startMinutes-(startHour*60)
+        return ("" + timeToString(startHour) + ":" + timeToString(startMinute))
     }
 
     fun endTimeAsString() : String{
-        return ("" + timeToString(endHours) + ":" + timeToString(endMinutes))
+        val endHour : Int = endMinutes/60
+        val endMinute : Int = endMinutes-(endHour*60)
+        return ("" + timeToString(endHour) + ":" + timeToString(endMinute))
     }
 
     private fun timeToString(time: Int) : String{
@@ -55,15 +62,9 @@ open class AlarmPeriod() : RealmObject() {
         return string + time
     }
 
-    private fun validateHours(hours: Int) : Int{
-        if(hours > 23 || hours < 0){
+    private fun validateTime(timeAsMinutes: Int) : Int{
+        if(timeAsMinutes > 1439 || timeAsMinutes < 0){
             return 0
-        }else return hours
-    }
-
-    private fun validateMinutes(minutes: Int) : Int{
-        if(minutes > 59 || minutes < 0){
-            return 0
-        }else return minutes
+        }else return timeAsMinutes
     }
 }

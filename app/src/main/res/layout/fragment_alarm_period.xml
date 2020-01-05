@@ -101,4 +101,13 @@
             android:inputType="text"
             android:imeOptions="actionDone"/>
 
+    <Button
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/alarm_custom_message_edit_text"
+            android:id="@+id/alarm_delete_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Delete"/>
+
 </android.support.constraint.ConstraintLayout>

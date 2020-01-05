@@ -20,7 +20,6 @@
             android:layout_height="match_parent"
             android:layout_margin="@dimen/fab_margin"
             android:textSize="@dimen/alarm_list_item_text_size"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/alarm_switch"/>
 
 </android.support.constraint.ConstraintLayout>
