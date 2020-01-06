@@ -173,6 +173,14 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
     }
 
     override fun onAlarmDeleted() {
+        // re-schedule service start if needed
+        var alarmTime = getNextAlarmMillis()
+        if(alarmTime == 0L){
+            startForegroundService(Intent(applicationContext, AlarmService::class.java))
+        }
+        else if(alarmTime > -1){
+            scheduleAlarmService(alarmTime)
+        }
         val transaction : FragmentTransaction? = supportFragmentManager.beginTransaction()
         transaction?.replace(R.id.page_root_frame, AlarmsFragment())
         transaction?.addToBackStack(null)
@@ -181,20 +189,14 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
         Snackbar.make(mCoordinatorLayout, R.string.alarm_deleted_message, Snackbar.LENGTH_LONG).show()
     }
 
-    override fun onAlarmTimeChanged(alarmPeriod: AlarmPeriod, startMinutes: Int, endMinutes: Int,
-                                    timeView: TextView) {
-        // TODO validate time, save to realm and update textview if necessary
-        mRealm.executeTransaction {
-            // get all enabled alarms, except the one where the time just changed
-            var enabledAlarms = it.where(AlarmPeriod::class.java).equalTo("enabled", true)
-                .and().notEqualTo("id", alarmPeriod.id).findAll()
-            // check validity using the new alarm time
-            if(Utils.isNewAlarmValid(AlarmPeriod(startMinutes, endMinutes), enabledAlarms)){
-                alarmPeriod.startMinutes = startMinutes
-                alarmPeriod.endMinutes = endMinutes
-            }else{
-
-            }
+    override fun onAlarmTimeChanged(alarmID: String) {
+        // re-schedule service start if needed
+        var alarmTime = getNextAlarmMillis()
+        if(alarmTime == 0L){
+            startForegroundService(Intent(applicationContext, AlarmService::class.java))
+        }
+        else if(alarmTime > -1){
+            scheduleAlarmService(alarmTime)
         }
     }
 

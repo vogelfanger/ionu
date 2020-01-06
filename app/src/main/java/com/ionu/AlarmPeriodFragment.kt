@@ -105,7 +105,9 @@ class AlarmPeriodFragment: Fragment(), TimePickerFragment.TimePickerListener {
             mRealm.executeTransaction {
                 it.where(AlarmPeriod::class.java).equalTo("id", mAlarmID).findAll().deleteAllFromRealm()
             }
-
+            mListener?.let {
+                it.onAlarmDeleted()
+            }
         }
     }
 
@@ -119,7 +121,7 @@ class AlarmPeriodFragment: Fragment(), TimePickerFragment.TimePickerListener {
         if (context is AlarmPeriodFragmentListener) {
             mListener = context
         } else {
-            throw RuntimeException(context.toString() + " must implement AlarmPeriodFragmentListener")
+            throw RuntimeException(context.toString() + " must implement AlarmPeriodFragmentListener") as Throwable
         }
     }
 
@@ -131,6 +133,7 @@ class AlarmPeriodFragment: Fragment(), TimePickerFragment.TimePickerListener {
     //TODO test verifying, check if Realm transaction should be moved from here to Activity as well
     override fun onPickerTimeSet(hours: Int, minutes: Int, fragmentTag: String) {
         Log.d("AlarmPeriodFragment", "onPickerTimeSet")
+        var timeChanged = false
         mRealm.executeTransaction {
             // get all enabled alarms, except the one where the time is being changed
             var enabledAlarms = it.where(AlarmPeriod::class.java).equalTo("enabled", true)
@@ -143,6 +146,7 @@ class AlarmPeriodFragment: Fragment(), TimePickerFragment.TimePickerListener {
                 if(fragmentTag == startTimePickerTag){
                     if(Utils.isNewAlarmValid(AlarmPeriod(hours*60+minutes, it.endMinutes), enabledAlarms)){
                         it.startMinutes = hours*60+minutes
+                        timeChanged = true
                     }else {
                         // show error message
                         view?.let {
@@ -154,6 +158,7 @@ class AlarmPeriodFragment: Fragment(), TimePickerFragment.TimePickerListener {
                 else if(fragmentTag == endTimePickerTag) {
                     if(Utils.isNewAlarmValid(AlarmPeriod(it.startMinutes, hours*60+minutes), enabledAlarms)){
                         it.endMinutes = hours*60+minutes
+                        timeChanged = true
                     }else{
                         // show error message
                         view?.let {
@@ -164,11 +169,14 @@ class AlarmPeriodFragment: Fragment(), TimePickerFragment.TimePickerListener {
                 }
             }
         }
+        mListener?.let {
+            if(timeChanged) it.onAlarmTimeChanged(mAlarmID)
+        }
     }
 
     interface AlarmPeriodFragmentListener{
         fun onAlarmDeleted()
         fun onAlarmEnabled(alarmID: String, enabled: Boolean)
-        fun onAlarmTimeChanged(alarmPeriod: AlarmPeriod, hours: Int, minutes: Int, timeView: TextView)
+        fun onAlarmTimeChanged(alarmID: String)
     }
 }

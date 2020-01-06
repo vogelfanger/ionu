@@ -3,6 +3,7 @@ package com.ionu
 import android.app.Notification
 import android.app.Service
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
@@ -18,8 +19,11 @@ class AlarmService : Service() {
     private var mHandlerThread = HandlerThread("AlarmHandlerThread")
     private lateinit var mRealm : Realm
     private lateinit var mHandler : Handler
-
+    private lateinit var mScreenReceiver : ScreenReceiver
     private lateinit var mAlarms : RealmResults<AlarmPeriod>
+
+    private var mAlarmPeriodViolated = false
+
 
     override fun onCreate() {
         Log.d("AlarmService", "onCreate()")
@@ -57,19 +61,46 @@ class AlarmService : Service() {
         // Schedule service to end when alarm is no longer active
         Log.d("AlarmService", "scheduling service end " + totalAlarmTimeMillis/1000 + " seconds from now")
         mHandler.postDelayed(mStopService, totalAlarmTimeMillis)
+
+        mScreenReceiver = ScreenReceiver()
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_USER_PRESENT)
+        }
+        registerReceiver(mScreenReceiver, filter)
+
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        mRealm.close()
         mHandler.removeCallbacks(mStopService)
+        unregisterReceiver(mScreenReceiver)
+        mRealm.close()
         mHandlerThread.quitSafely()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // TODO command for starting service when alarms are edited/created/deleted
-        // TODO find new total alarm minutes and reschedule mStopService
-        return super.onStartCommand(intent, flags, startId)
+        var action = ""
+        intent?.let {
+            if(it.action != null){
+                action = it.action
+            }
+        }
+        when(action){
+
+            GlobalVariables.ACTION_SCREEN_ON -> {
+                Log.d("AlarmService", "onStartCommand() screen on")
+            }
+            GlobalVariables.ACTION_SCREEN_OFF -> {
+                Log.d("AlarmService", "onStartCommand() screen off")
+            }
+            GlobalVariables.ACTION_USER_PRESENT -> {
+                Log.d("AlarmService", "onStartCommand() user present")
+                //TODO add violation to history
+            }
+        }
+        return START_STICKY
     }
 
     override fun onBind(intent: Intent): IBinder {
@@ -78,6 +109,9 @@ class AlarmService : Service() {
 
     private val mStopService = Runnable {
         Log.d("AlarmService", "stopping service, no more alarms active")
+        if(!mAlarmPeriodViolated){
+            //TODO add success to history
+        }
         this.stopSelf()
     }
 
@@ -192,5 +226,9 @@ class AlarmService : Service() {
             .setContentText(resources.getString(R.string.notification_alarms_active))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
         return builder.build()
+    }
+
+    private fun updateForegroundNotification() {
+
     }
 }
