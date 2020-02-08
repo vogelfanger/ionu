@@ -1,7 +1,9 @@
 package com.ionu
 
 import android.app.Notification
+import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Handler
@@ -91,6 +93,8 @@ class AlarmService : Service() {
 
             GlobalVariables.ACTION_SCREEN_ON -> {
                 Log.d("AlarmService", "onStartCommand() screen on")
+                // TODO update remaining service time to notification
+                //updateNotificationTime()
             }
             GlobalVariables.ACTION_SCREEN_OFF -> {
                 Log.d("AlarmService", "onStartCommand() screen off")
@@ -219,6 +223,12 @@ class AlarmService : Service() {
         return totalAlarmMinutes
     }
 
+    private fun getRemainingMinutes() : Int {
+        var minutesRemaining = 0
+
+        return minutesRemaining
+    }
+
     private fun getForegroundNotification() : Notification {
         val builder = NotificationCompat.Builder(this, GlobalVariables.MAIN_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -228,7 +238,21 @@ class AlarmService : Service() {
         return builder.build()
     }
 
-    private fun updateForegroundNotification() {
+    // Updates the foreground notification with remaining alarm time.
+    private fun updateNotificationTime() {
 
+        var remainingTime = getRemainingMinutes()
+        var remainingHours : Int = remainingTime/60
+        var remainingMinutes : Int = remainingTime - (remainingHours*60)
+        var time = "" + remainingHours + "h " + remainingMinutes + "min"
+
+        val builder = NotificationCompat.Builder(this, GlobalVariables.MAIN_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(resources.getString(R.string.app_name))
+            .setContentText(resources.getString(R.string.notification_time_remaining) + time)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+
+        var nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.notify(GlobalVariables.FOREGROUND_NOTIFICATION_ID, builder.build())
     }
 }

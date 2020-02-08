@@ -24,9 +24,6 @@ import io.realm.internal.Util
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 
-
-//TODO add interface methods for when alarm times are changed, and when deleted
-// TODO and start AlarmService with an edit command (if it's not possible to check if the service is currently running)
 class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListener,
                         AlarmPeriodFragment.AlarmPeriodFragmentListener{
 
@@ -41,6 +38,7 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
         setSupportActionBar(toolbar)
 
         mRealm = Realm.getDefaultInstance()
+        scheduleNextAlarm()
 
         mCoordinatorLayout = findViewById(R.id.main_activity_coordinator_layout)
         mViewPager = main_viewpager
@@ -61,7 +59,6 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
             Snackbar.make(view, "New alarm saved", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
         }
-
     }
 
     override fun onDestroy() {
@@ -112,13 +109,7 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
         }
         if(scheduleService){
             // schedule alarm service to start if alarm was enabled
-            var alarmTime = getNextAlarmMillis()
-            if(alarmTime == 0L){
-                startForegroundService(Intent(applicationContext, AlarmService::class.java))
-            }
-            else if(alarmTime > -1){
-                scheduleAlarmService(alarmTime)
-            }
+            scheduleNextAlarm()
         }
     }
 
@@ -148,13 +139,7 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
         }
         if(scheduleService){
             // schedule alarm service to start if alarm was enabled
-            var alarmTime = getNextAlarmMillis()
-            if(alarmTime == 0L){
-                startForegroundService(Intent(applicationContext, AlarmService::class.java))
-            }
-            else if(alarmTime > -1){
-                scheduleAlarmService(alarmTime)
-            }
+            scheduleNextAlarm()
         }
     }
 
@@ -174,13 +159,8 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
 
     override fun onAlarmDeleted() {
         // re-schedule service start if needed
-        var alarmTime = getNextAlarmMillis()
-        if(alarmTime == 0L){
-            startForegroundService(Intent(applicationContext, AlarmService::class.java))
-        }
-        else if(alarmTime > -1){
-            scheduleAlarmService(alarmTime)
-        }
+        scheduleNextAlarm()
+
         val transaction : FragmentTransaction? = supportFragmentManager.beginTransaction()
         transaction?.replace(R.id.page_root_frame, AlarmsFragment())
         transaction?.addToBackStack(null)
@@ -191,13 +171,7 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
 
     override fun onAlarmTimeChanged(alarmID: String) {
         // re-schedule service start if needed
-        var alarmTime = getNextAlarmMillis()
-        if(alarmTime == 0L){
-            startForegroundService(Intent(applicationContext, AlarmService::class.java))
-        }
-        else if(alarmTime > -1){
-            scheduleAlarmService(alarmTime)
-        }
+        scheduleNextAlarm()
     }
 
     /**
@@ -253,7 +227,23 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
         return ret
     }
 
-    // Schedules AlarmService to start at specified time
+    /** Schedules AlarmService based on next available alarm period.
+        If there are no enabled alarms, this method does nothing.
+        Uses Realm instance, so do not call inside RealmTransaction.
+     */
+    private fun scheduleNextAlarm() {
+        val nextAlarmMillis = getNextAlarmMillis()
+        if(nextAlarmMillis == 0L){
+            startForegroundService(Intent(applicationContext, AlarmService::class.java))
+        }
+        else if(nextAlarmMillis > -1){
+            scheduleAlarmService(nextAlarmMillis)
+        }
+    }
+
+    /** Schedules AlarmService to start at specified time.
+        Uses Realm instance, so do not call inside RealmTransaction.
+    */
     private fun scheduleAlarmService(triggerAtMillis: Long){
 
         Log.d("MainActivity", "scheduleAlarmService() at " + triggerAtMillis)

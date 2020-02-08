@@ -16,7 +16,7 @@ class MainPagerAdapter(fm: FragmentManager, context: Context) : FragmentPagerAda
             //TODO use a root fragment instead so it can be replaced later
             0 -> return PageRootFragment()
             else -> {
-                return AlarmsFragment.newInstance("uselessString")
+                return HistoryFragment()
             }
         }
     }

@@ -1,0 +1,419 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="8dp"
+            tools:context=".HistoryFragment">
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+        <!-- Weekly view -->
+
+        <android.support.v7.widget.CardView
+                xmlns:card_view="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/cardview_weekly_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                card_view:cardCornerRadius="4dp">
+
+            <android.support.constraint.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                <ImageView
+                        card_view:layout_constraintBottom_toTopOf="@id/card_divider_weekly"
+                        card_view:layout_constraintStart_toStartOf="parent"
+                        android:layout_marginBottom="8dp"
+                        android:id="@+id/card_icon_weekly_view"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/week_view_icon"
+                        android:tint="@color/colorPrimaryDark"/>
+
+                <TextView
+                        card_view:layout_constraintStart_toEndOf="@id/card_icon_weekly_view"
+                        card_view:layout_constraintBottom_toTopOf="@id/card_divider_weekly"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginStart="8dp"
+                        android:id="@+id/card_title_weekly_view"
+                        style="@style/CardTitleText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/card_title_weekly_view"/>
+
+                <View
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_icon_weekly_view"
+                        android:id="@+id/card_divider_weekly"
+                        android:layout_width="match_parent"
+                        android:layout_height="2dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="@android:color/darker_gray"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_divider_weekly"
+                        card_view:layout_constraintStart_toStartOf="parent"
+                        android:id="@+id/card_text_info_weekly_ratio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/card_text_info_ratio"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_divider_weekly"
+                        card_view:layout_constraintBaseline_toBaselineOf="@id/card_text_info_weekly_ratio"
+                        card_view:layout_constraintEnd_toEndOf="parent"
+                        android:gravity="end"
+                        android:textAlignment="gravity"
+                        android:id="@+id/card_text_value_weekly_ratio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="4 / 5"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_weekly_ratio"
+                        card_view:layout_constraintStart_toStartOf="parent"
+                        android:id="@+id/card_text_info_weekly_total"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/card_text_info_total_time"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_weekly_ratio"
+                        card_view:layout_constraintBaseline_toBaselineOf="@id/card_text_info_weekly_total"
+                        card_view:layout_constraintEnd_toEndOf="parent"
+                        android:gravity="end"
+                        android:textAlignment="gravity"
+                        android:id="@+id/card_text_value_weekly_total"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="7h 23min"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_weekly_total"
+                        card_view:layout_constraintStart_toStartOf="parent"
+                        android:id="@+id/card_text_info_best_week"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/card_text_info_best_week"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_weekly_total"
+                        card_view:layout_constraintBaseline_toBaselineOf="@id/card_text_info_best_week"
+                        card_view:layout_constraintEnd_toEndOf="parent"
+                        android:gravity="end"
+                        android:textAlignment="gravity"
+                        android:id="@+id/card_text_value_best_week"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="15h 40min"
+                        style="@style/CardContentText"/>
+
+            </android.support.constraint.ConstraintLayout>
+
+        </android.support.v7.widget.CardView>
+
+
+
+        <!-- Monthly view -->
+
+        <android.support.v7.widget.CardView
+                xmlns:card_view="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/cardview_monthly_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="8dp"
+                card_view:cardCornerRadius="4dp">
+
+            <android.support.constraint.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                <ImageView
+                        card_view:layout_constraintBottom_toTopOf="@id/card_divider_monthly"
+                        card_view:layout_constraintStart_toStartOf="parent"
+                        android:layout_marginBottom="8dp"
+                        android:id="@+id/card_icon_monthly_view"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/month_view_icon"
+                        android:tint="@color/colorPrimaryDark"/>
+
+                <TextView
+                        card_view:layout_constraintStart_toEndOf="@id/card_icon_monthly_view"
+                        card_view:layout_constraintBottom_toTopOf="@id/card_divider_monthly"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginStart="8dp"
+                        android:id="@+id/card_title_monthly_view"
+                        style="@style/CardTitleText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/card_title_monthly_view"/>
+
+                <View
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_icon_monthly_view"
+                        android:id="@+id/card_divider_monthly"
+                        android:layout_width="match_parent"
+                        android:layout_height="2dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="@android:color/darker_gray"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_divider_monthly"
+                        card_view:layout_constraintStart_toStartOf="parent"
+                        android:id="@+id/card_text_info_monthly_ratio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/card_text_info_ratio"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_divider_monthly"
+                        card_view:layout_constraintBaseline_toBaselineOf="@id/card_text_info_monthly_ratio"
+                        card_view:layout_constraintEnd_toEndOf="parent"
+                        android:gravity="end"
+                        android:textAlignment="gravity"
+                        android:id="@+id/card_text_value_monthly_ratio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="18 / 25"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_monthly_ratio"
+                        card_view:layout_constraintStart_toStartOf="parent"
+                        android:id="@+id/card_text_info_monthly_total"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/card_text_info_total_time"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_monthly_ratio"
+                        card_view:layout_constraintBaseline_toBaselineOf="@id/card_text_info_monthly_total"
+                        card_view:layout_constraintEnd_toEndOf="parent"
+                        android:gravity="end"
+                        android:textAlignment="gravity"
+                        android:id="@+id/card_text_value_monthly_total"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="26h 54min"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_monthly_total"
+                        card_view:layout_constraintStart_toStartOf="parent"
+                        android:id="@+id/card_text_info_best_month"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/card_text_info_best_month"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_monthly_total"
+                        card_view:layout_constraintBaseline_toBaselineOf="@id/card_text_info_best_month"
+                        card_view:layout_constraintEnd_toEndOf="parent"
+                        android:gravity="end"
+                        android:textAlignment="gravity"
+                        android:id="@+id/card_text_value_best_month"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="46h 32min"
+                        style="@style/CardContentText"/>
+
+            </android.support.constraint.ConstraintLayout>
+
+        </android.support.v7.widget.CardView>
+
+
+
+        <!-- All-time view -->
+
+        <android.support.v7.widget.CardView
+                xmlns:card_view="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/cardview_alltime_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="8dp"
+                card_view:cardCornerRadius="4dp">
+
+            <android.support.constraint.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                <ImageView
+                        card_view:layout_constraintBottom_toTopOf="@id/card_divider_alltime"
+                        card_view:layout_constraintStart_toStartOf="parent"
+                        android:layout_marginBottom="8dp"
+                        android:id="@+id/card_icon_alltime_view"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/trophy_icon"
+                        android:tint="@color/colorPrimaryDark"/>
+
+                <TextView
+                        card_view:layout_constraintStart_toEndOf="@id/card_icon_alltime_view"
+                        card_view:layout_constraintBottom_toTopOf="@id/card_divider_alltime"
+                        android:layout_marginBottom="8dp"
+                        android:layout_marginStart="8dp"
+                        android:id="@+id/card_title_alltime_view"
+                        style="@style/CardTitleText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/card_title_alltime_view"/>
+
+                <View
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_icon_alltime_view"
+                        android:id="@+id/card_divider_alltime"
+                        android:layout_width="match_parent"
+                        android:layout_height="2dp"
+                        android:layout_marginEnd="20dp"
+                        android:background="@android:color/darker_gray"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_divider_alltime"
+                        card_view:layout_constraintStart_toStartOf="parent"
+                        android:id="@+id/card_text_info_current_streak"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/card_text_info_current_streak"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_divider_alltime"
+                        card_view:layout_constraintBaseline_toBaselineOf="@id/card_text_info_current_streak"
+                        card_view:layout_constraintEnd_toEndOf="parent"
+                        android:gravity="end"
+                        android:textAlignment="gravity"
+                        android:id="@+id/card_text_value_current_streak"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="1h 43min"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_current_streak"
+                        card_view:layout_constraintStart_toStartOf="parent"
+                        android:id="@+id/card_text_info_best_streak"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/card_text_info_best_streak"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_current_streak"
+                        card_view:layout_constraintBaseline_toBaselineOf="@id/card_text_info_best_streak"
+                        card_view:layout_constraintEnd_toEndOf="parent"
+                        android:gravity="end"
+                        android:textAlignment="gravity"
+                        android:id="@+id/card_text_value_best_streak"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="23h 37min"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_best_streak"
+                        card_view:layout_constraintStart_toStartOf="parent"
+                        android:id="@+id/card_text_info_alltime_ratio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/card_text_info_ratio"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_best_streak"
+                        card_view:layout_constraintBaseline_toBaselineOf="@id/card_text_info_alltime_ratio"
+                        card_view:layout_constraintEnd_toEndOf="parent"
+                        android:gravity="end"
+                        android:textAlignment="gravity"
+                        android:id="@+id/card_text_value_alltime_ratio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="241 / 289"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_alltime_ratio"
+                        card_view:layout_constraintStart_toStartOf="parent"
+                        android:id="@+id/card_text_info_alltime_total_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="@string/card_text_info_total_time"
+                        style="@style/CardContentText"/>
+
+                <TextView
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_alltime_ratio"
+                        card_view:layout_constraintBaseline_toBaselineOf="@id/card_text_info_alltime_total_time"
+                        card_view:layout_constraintEnd_toEndOf="parent"
+                        android:gravity="end"
+                        android:textAlignment="gravity"
+                        android:id="@+id/card_text_value_alltime_total_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="164h 32min"
+                        style="@style/CardContentText"/>
+
+            </android.support.constraint.ConstraintLayout>
+
+        </android.support.v7.widget.CardView>
+
+    </LinearLayout>
+
+</ScrollView>
