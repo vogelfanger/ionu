@@ -21,11 +21,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
-                card_view:cardCornerRadius="4dp">
+                style="@style/CardStyle">
 
             <android.support.constraint.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp">
 
                 <ImageView
                         card_view:layout_constraintBottom_toTopOf="@id/card_divider_weekly"
@@ -148,11 +149,13 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginBottom="8dp"
-                card_view:cardCornerRadius="4dp">
+                card_view:cardCornerRadius="8dp"
+                style="@style/CardStyle">
 
             <android.support.constraint.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp">
 
                 <ImageView
                         card_view:layout_constraintBottom_toTopOf="@id/card_divider_monthly"
@@ -275,11 +278,13 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginBottom="8dp"
-                card_view:cardCornerRadius="4dp">
+                card_view:cardCornerRadius="4dp"
+                style="@style/CardStyle">
 
             <android.support.constraint.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp">
 
                 <ImageView
                         card_view:layout_constraintBottom_toTopOf="@id/card_divider_alltime"
@@ -363,31 +368,6 @@
                 <TextView
                         card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_best_streak"
                         card_view:layout_constraintStart_toStartOf="parent"
-                        android:id="@+id/card_text_info_alltime_ratio"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/card_text_info_ratio"
-                        style="@style/CardContentText"/>
-
-                <TextView
-                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_best_streak"
-                        card_view:layout_constraintBaseline_toBaselineOf="@id/card_text_info_alltime_ratio"
-                        card_view:layout_constraintEnd_toEndOf="parent"
-                        android:gravity="end"
-                        android:textAlignment="gravity"
-                        android:id="@+id/card_text_value_alltime_ratio"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:layout_marginBottom="8dp"
-                        android:text="241 / 289"
-                        style="@style/CardContentText"/>
-
-                <TextView
-                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_alltime_ratio"
-                        card_view:layout_constraintStart_toStartOf="parent"
                         android:id="@+id/card_text_info_alltime_total_time"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -397,7 +377,7 @@
                         style="@style/CardContentText"/>
 
                 <TextView
-                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_alltime_ratio"
+                        card_view:layout_constraintTop_toBottomOf="@+id/card_text_info_best_streak"
                         card_view:layout_constraintBaseline_toBaselineOf="@id/card_text_info_alltime_total_time"
                         card_view:layout_constraintEnd_toEndOf="parent"
                         android:gravity="end"

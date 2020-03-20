@@ -6,9 +6,11 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
+import android.preference.PreferenceManager
 import android.support.v4.app.NotificationCompat
 import android.util.Log
 import io.realm.Realm
@@ -23,16 +25,19 @@ class AlarmService : Service() {
     private lateinit var mHandler : Handler
     private lateinit var mScreenReceiver : ScreenReceiver
     private lateinit var mAlarms : RealmResults<AlarmPeriod>
-
-    private var mAlarmPeriodViolated = false
+    private lateinit var mPrefs : SharedPreferences
+    private var mStartMillis = 0L
 
 
     override fun onCreate() {
         Log.d("AlarmService", "onCreate()")
         startForeground(GlobalVariables.FOREGROUND_NOTIFICATION_ID, getForegroundNotification())
+        mStartMillis = Calendar.getInstance().timeInMillis
+        Log.d("AlarmService", "start time: " + mStartMillis)
 
         mHandlerThread.start()
         mHandler = Handler(mHandlerThread.looper)
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
         mRealm = Realm.getDefaultInstance()
 
         var totalAlarmTimeMillis : Long = 0
@@ -93,15 +98,22 @@ class AlarmService : Service() {
 
             GlobalVariables.ACTION_SCREEN_ON -> {
                 Log.d("AlarmService", "onStartCommand() screen on")
-                // TODO update remaining service time to notification
-                //updateNotificationTime()
+                // if service is still running without enabled alarms, shut it down
+                if(findTotalAlarmMinutes(mAlarms) == 0) {
+                    mHandler.post(mStopService)
+                }
             }
             GlobalVariables.ACTION_SCREEN_OFF -> {
                 Log.d("AlarmService", "onStartCommand() screen off")
             }
             GlobalVariables.ACTION_USER_PRESENT -> {
                 Log.d("AlarmService", "onStartCommand() user present")
-                //TODO add violation to history
+                // make sure there are currently active alarms before adding a violation
+                if(findTotalAlarmMinutes(mAlarms) == 0) {
+                    mHandler.post(mStopService)
+                } else {
+                    alarmPeriodViolated()
+                }
             }
         }
         return START_STICKY
@@ -113,10 +125,206 @@ class AlarmService : Service() {
 
     private val mStopService = Runnable {
         Log.d("AlarmService", "stopping service, no more alarms active")
-        if(!mAlarmPeriodViolated){
-            //TODO add success to history
+        val endMillis = Calendar.getInstance().timeInMillis
+        mRealm.executeTransaction {
+            it.insert(HistoryPeriod(mStartMillis, endMillis, true))
+            Log.d("AlarmService", "History period saved, start time " + mStartMillis
+                    + ", end time " + endMillis + ", successful: " + true)
         }
+        // TODO schedule next alarm
         this.stopSelf()
+    }
+
+    private fun alarmPeriodViolated() {
+        val calendar = Calendar.getInstance()
+        val endMillis = calendar.timeInMillis
+        mRealm.executeTransaction {
+            it.insert(HistoryPeriod(mStartMillis, endMillis, false))
+            Log.d("AlarmService", "History period saved, start time " + mStartMillis
+                + ", end time " + endMillis + ", successful: " + false)
+        }
+
+        // let user know alarm was violated
+        val builder = NotificationCompat.Builder(this, GlobalVariables.MAIN_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(resources.getString(R.string.app_name))
+            .setContentText(resources.getString(R.string.notification_alarm_period_violated))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.notify(GlobalVariables.ALARM_PERIOD_VIOLATED_NOTIFICATION_ID, builder.build())
+
+        // Update data stored in shared prefs
+        updatePrefs()
+        stopSelf()
+    }
+
+    // Update data stored in shared prefs
+    private fun updatePrefs() {
+        updateAlltimeData(mPrefs, mRealm)
+        updateWeeklyData(mPrefs, Calendar.getInstance(), mRealm)
+        updateMonthlyData(mPrefs, Calendar.getInstance(), mRealm)
+    }
+
+    fun updateAlltimeData(prefs: SharedPreferences, realm: Realm) {
+
+        var totalTime = 0L
+        realm.executeTransaction {
+            var pastPeriods = it.where(HistoryPeriod::class.java).findAll()
+
+            // update alltime total
+            for (pastPeriod in pastPeriods) {
+                totalTime += pastPeriod.getLenght()
+            }
+            prefs.edit().putLong(GlobalVariables.PREF_KEY_ALLTIME_TOTAL_TIME, totalTime).apply()
+
+            var sortedPeriods = pastPeriods.sort("endMillis", Sort.DESCENDING)
+            var currentStreak = 0L
+            for (period in sortedPeriods){
+                if(period.successful) {
+                    currentStreak += period.getLenght()
+                } else break
+            }
+            prefs.edit().putLong(GlobalVariables.PREF_KEY_CURRENT_STREAK, currentStreak).apply()
+            if(currentStreak > prefs.getLong(GlobalVariables.PREF_KEY_BEST_STREAK, 0L)) {
+                prefs.edit().putLong(GlobalVariables.PREF_KEY_BEST_STREAK, currentStreak).apply()
+            }
+        }
+    }
+
+    fun updateMonthlyData(prefs: SharedPreferences, calendar: Calendar, realm: Realm) {
+
+        // get start of this month in milliseconds
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.clear(Calendar.MINUTE)
+        calendar.clear(Calendar.SECOND)
+        calendar.clear(Calendar.MILLISECOND)
+        calendar.set(Calendar.DAY_OF_MONTH, 1)
+        var startOfMonth = calendar.timeInMillis
+
+        realm.executeTransaction {
+            // find all alarms that ended this month
+            var periodsThisMonth = it.where(HistoryPeriod::class.java)
+                .greaterThanOrEqualTo("endMillis", startOfMonth).findAll()
+
+            // in case of first entry, check if it started last month
+            if(periodsThisMonth.size == 1) {
+                var lastPeriod = periodsThisMonth.first()
+                if(lastPeriod != null && lastPeriod.startMillis < startOfMonth) {
+
+                    // add first part to previous month and see if it was a new best
+                    var lastMonthTotal = prefs.getLong(GlobalVariables.PREF_KEY_CURRENT_MONTH, 0L)
+                    lastMonthTotal += startOfMonth - lastPeriod.startMillis
+                    if(lastMonthTotal > prefs.getLong(GlobalVariables.PREF_KEY_BEST_MONTH, 0L)) {
+                        prefs.edit().putLong(GlobalVariables.PREF_KEY_BEST_MONTH, lastMonthTotal).apply()
+                    }
+
+                    // reset this month's time to the remaining part of the alarm
+                    var thisMonthTime = lastPeriod.endMillis - startOfMonth
+                    prefs.edit().putLong(GlobalVariables.PREF_KEY_CURRENT_MONTH, thisMonthTime).apply()
+                    if(thisMonthTime > prefs.getLong(GlobalVariables.PREF_KEY_BEST_MONTH, 0L)) {
+                        prefs.edit().putLong(GlobalVariables.PREF_KEY_BEST_MONTH, thisMonthTime).apply()
+                    }
+                }
+                else if(lastPeriod != null) {
+                    // alarm started and ended this month, add to this month's data and best if needed
+                    prefs.edit().putLong(GlobalVariables.PREF_KEY_CURRENT_MONTH, lastPeriod.getLenght()).apply()
+                    if(lastPeriod.getLenght() > prefs.getLong(GlobalVariables.PREF_KEY_BEST_MONTH, 0L)) {
+                        prefs.edit().putLong(GlobalVariables.PREF_KEY_BEST_MONTH, lastPeriod.getLenght()).apply()
+                    }
+                }
+            }
+
+            // add alarms to current month's time and update monthly best if needed
+            else {
+                var thisMonthTotal = 0L
+                for(period in periodsThisMonth) {
+                    if(period != null) {
+                        if(period.startMillis < startOfMonth) {
+                            thisMonthTotal += (period.endMillis - startOfMonth)
+                        }else {
+                            thisMonthTotal += period.getLenght()
+                        }
+                    }
+                }
+                // update weekly total and best week
+                if(thisMonthTotal > prefs.getLong(GlobalVariables.PREF_KEY_BEST_MONTH, 0L)) {
+                    prefs.edit().putLong(GlobalVariables.PREF_KEY_BEST_MONTH, thisMonthTotal).apply()
+                }
+                prefs.edit().putLong(GlobalVariables.PREF_KEY_CURRENT_MONTH, thisMonthTotal).apply()
+            }
+
+            // update failure count
+            var failedPeriods = periodsThisMonth.where().equalTo("successful", false)
+            prefs.edit().putLong(GlobalVariables.PREF_KEY_MONTHLY_FAILURES, failedPeriods.count()).apply()
+        }
+    }
+
+    fun updateWeeklyData(prefs: SharedPreferences, calendar: Calendar, realm: Realm) {
+
+        // get start of this week in milliseconds
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.clear(Calendar.MINUTE)
+        calendar.clear(Calendar.SECOND)
+        calendar.clear(Calendar.MILLISECOND)
+        calendar.set(Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
+        var startOfWeek = calendar.timeInMillis
+
+        realm.executeTransaction {
+            // find all alarms that ended this week
+            var periodsThisWeek = it.where(HistoryPeriod::class.java)
+                .greaterThanOrEqualTo("endMillis", startOfWeek).findAll()
+
+            // in case of first entry, check if it started last week
+            if(periodsThisWeek.size == 1) {
+                var lastPeriod = periodsThisWeek.first()
+                if(lastPeriod != null && lastPeriod.startMillis < startOfWeek) {
+
+                    // add first part to previous week and see if it was a new best
+                    var lastWeekTotal = prefs.getLong(GlobalVariables.PREF_KEY_CURRENT_WEEK, 0L)
+                    lastWeekTotal += startOfWeek - lastPeriod.startMillis
+                    if(lastWeekTotal > prefs.getLong(GlobalVariables.PREF_KEY_BEST_WEEK, 0L)) {
+                        prefs.edit().putLong(GlobalVariables.PREF_KEY_BEST_WEEK, lastWeekTotal).apply()
+                    }
+
+                    // reset this week's time to the remaining part of the alarm
+                    var thisWeekTime = lastPeriod.endMillis - startOfWeek
+                    prefs.edit().putLong(GlobalVariables.PREF_KEY_CURRENT_WEEK, thisWeekTime).apply()
+                    if(thisWeekTime > prefs.getLong(GlobalVariables.PREF_KEY_BEST_WEEK, 0L)) {
+                        prefs.edit().putLong(GlobalVariables.PREF_KEY_BEST_WEEK, thisWeekTime).apply()
+                    }
+                }
+                else if(lastPeriod != null) {
+                    // alarm started and ended this week, add to this week's data and best if needed
+                    prefs.edit().putLong(GlobalVariables.PREF_KEY_CURRENT_WEEK, lastPeriod.getLenght()).apply()
+                    if(lastPeriod.getLenght() > prefs.getLong(GlobalVariables.PREF_KEY_BEST_WEEK, 0L)) {
+                        prefs.edit().putLong(GlobalVariables.PREF_KEY_BEST_WEEK, lastPeriod.getLenght()).apply()
+                    }
+                }
+            }
+
+            // add alarms to current week's time and update weekly best if needed
+            else {
+                var thisWeekTotal = 0L
+                for(period in periodsThisWeek) {
+                    if(period != null) {
+                        if(period.startMillis < startOfWeek) {
+                            thisWeekTotal += (period.endMillis - startOfWeek)
+                        }else {
+                            thisWeekTotal += period.getLenght()
+                        }
+                    }
+                }
+                // update weekly total and best week
+                if(thisWeekTotal > prefs.getLong(GlobalVariables.PREF_KEY_BEST_WEEK, 0L)) {
+                    prefs.edit().putLong(GlobalVariables.PREF_KEY_BEST_WEEK, thisWeekTotal).apply()
+                }
+                prefs.edit().putLong(GlobalVariables.PREF_KEY_CURRENT_WEEK, thisWeekTotal).apply()
+            }
+
+            // update failure count
+            var failedPeriods = periodsThisWeek.where().equalTo("successful", false)
+            prefs.edit().putLong(GlobalVariables.PREF_KEY_WEEKLY_FAILURES, failedPeriods.count()).apply()
+        }
     }
 
 
@@ -124,7 +332,7 @@ class AlarmService : Service() {
        Length is given as minutes the combined alarm should last from current time.
        If no alarms are currently active, returns 0
      */
-    private fun findTotalAlarmMinutes(alarms: RealmResults<AlarmPeriod>) : Int{
+    fun findTotalAlarmMinutes(alarms: RealmResults<AlarmPeriod>) : Int{
         if(alarms.isEmpty()) return 0
 
         var totalAlarmMinutes = 0
@@ -234,7 +442,7 @@ class AlarmService : Service() {
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(resources.getString(R.string.app_name))
             .setContentText(resources.getString(R.string.notification_alarms_active))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
         return builder.build()
     }
 
@@ -250,7 +458,7 @@ class AlarmService : Service() {
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(resources.getString(R.string.app_name))
             .setContentText(resources.getString(R.string.notification_time_remaining) + time)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
 
         var nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(GlobalVariables.FOREGROUND_NOTIFICATION_ID, builder.build())

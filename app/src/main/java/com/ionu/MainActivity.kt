@@ -25,7 +25,8 @@ import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 
 class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListener,
-                        AlarmPeriodFragment.AlarmPeriodFragmentListener{
+                        AlarmPeriodFragment.AlarmPeriodFragmentListener,
+                        ViewPager.OnPageChangeListener{
 
     private lateinit var mViewPager: ViewPager
     private lateinit var mPagerAdapter: MainPagerAdapter
@@ -44,11 +45,11 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
         mViewPager = main_viewpager
         mPagerAdapter = MainPagerAdapter(supportFragmentManager, this)
         mViewPager.adapter = mPagerAdapter
+        mViewPager.addOnPageChangeListener(this)
 
         val tabLayout: TabLayout = main_tablayout
         tabLayout.setupWithViewPager(mViewPager)
 
-        //TODO fab should be hidden when some fragments are shown
         fab.setOnClickListener { view ->
             // TODO use current clock time as AlarmPeriod parameter
             // Insert new alarm to Realm, fragments will update the change on their own
@@ -80,6 +81,25 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
             R.id.action_settings -> true
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    override fun onPageSelected(position: Int) {
+        // update history view every time it's selected
+        var page = mPagerAdapter.getItem(position)
+        if(page is HistoryFragment) {
+            page.updateView(applicationContext)
+            fab.hide()
+        }else if(page is PageRootFragment) {
+            fab.show()
+        }
+    }
+
+    override fun onPageScrollStateChanged(state: Int) {
+
+    }
+
+    override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+
     }
 
     override fun onAlarmInListEnabled(alarmID: String, isEnabled: Boolean) {
@@ -175,7 +195,7 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
     }
 
     /**
-     * Finds the time when next AlarmPeriod should start.
+     * Finds the time when next AlarmPeriod should start. Do not call inside RealmTransaction.
      * @return -1 if no enabled alarms were found,
      *          0 if alarm should start right away,
      *          or time in millis when next alarm starts.
@@ -197,7 +217,7 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
                 // check if there are currently active alarms
                 var currentAlarms = activeAlarms.where()
                     .lessThanOrEqualTo("startMinutes", currentMinutes)
-                    .and().greaterThanOrEqualTo("endMinutes", currentMinutes).findAll()
+                    .and().greaterThanOrEqualTo("endMinutes", currentMinutes+2).findAll()
                 if(currentAlarms.isNotEmpty()){
                     // alarm should be activated right away
                     ret = 0L

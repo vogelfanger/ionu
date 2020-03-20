@@ -99,6 +99,7 @@
             android:hint="@string/alarm_custom_message_hint"
             android:textSize="@dimen/alarm_list_item_text_size"
             android:inputType="text"
+            android:focusedByDefault="false"
             android:imeOptions="actionDone"/>
 
     <Button

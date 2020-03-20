@@ -14,11 +14,16 @@
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
 
-    <style name="CardTitleText" parent="android:TextAppearance.Material.Title">
+    <style name="CardTitleText" parent="android:TextAppearance.DeviceDefault.Large">
         <item name="android:textColor">@color/colorPrimaryDark</item>
     </style>
-    <style name="CardContentText" parent="android:TextAppearance.Material.Body2">
 
+    <style name="CardContentText" parent="android:TextAppearance.DeviceDefault.Medium">
+
+    </style>
+
+    <style name="CardStyle" parent="Base.CardView">
+        <item name="cardCornerRadius">12dp</item>
     </style>
 
 </resources>

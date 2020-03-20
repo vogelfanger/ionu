@@ -20,7 +20,7 @@ class Ionu : Application() {
             // main channel
             val name = getString(R.string.app_name)
             val descriptionText = getString(R.string.notification_channel_description_main)
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val importance = NotificationManager.IMPORTANCE_HIGH
             val mChannel = NotificationChannel(GlobalVariables.MAIN_CHANNEL_ID, name, importance)
             mChannel.description = descriptionText
             // Register the channel with the system; you can't change the importance

@@ -12,7 +12,7 @@
     <string name="alarm_custom_message_title">Notification message:</string>
     <string name="alarm_custom_message_hint">Add a custom message, be polite</string>
 
-    <string name="card_text_info_ratio">Successful periods:</string>
+    <string name="card_text_info_ratio">Failures:</string>
     <string name="card_text_info_total_time">Total time:</string>
     <string name="card_text_info_best_week">Best week:</string>
     <string name="card_text_info_best_month">Best month:</string>
@@ -23,6 +23,7 @@
     <string name="card_title_alltime_view">All-time</string>
 
     <string name="notification_alarms_active">Time to focus, put your device away!</string>
+    <string name="notification_alarm_period_violated">You unlocked your phone during quiet time</string>
     <string name="notification_time_remaining">Time to focus! Remaining time:</string>
     <string name="notification_channel_description_main">Basic notifications, app will not work without these.</string>
 
