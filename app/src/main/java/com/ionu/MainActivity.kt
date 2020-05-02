@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
                         AlarmPeriodFragment.AlarmPeriodFragmentListener,
                         ViewPager.OnPageChangeListener{
 
+    val TAG : String = "MainActivty"
     private lateinit var mViewPager: ViewPager
     private lateinit var mPagerAdapter: MainPagerAdapter
     private lateinit var mCoordinatorLayout: CoordinatorLayout
@@ -164,7 +165,6 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
     }
 
     override fun onAlarmSelected(alarmPeriod : AlarmPeriod) {
-        Log.d("MainActivity", "onAlarmSelected(), alarmID: " + alarmPeriod.id)
         // Show alarm details in another fragment
         val bundle = Bundle()
         bundle.putString(GlobalVariables.ALARM_PERIOD_ID_BUNDLE, alarmPeriod.id)
@@ -194,87 +194,20 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
         scheduleNextAlarm()
     }
 
-    /**
-     * Finds the time when next AlarmPeriod should start. Do not call inside RealmTransaction.
-     * @return -1 if no enabled alarms were found,
-     *          0 if alarm should start right away,
-     *          or time in millis when next alarm starts.
-     */
-    private fun getNextAlarmMillis() : Long{
-        var ret = -1L
-        var calendar = Calendar.getInstance()
-        var currentMillis = calendar.timeInMillis
-        var currentMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
-        var millisSinceMidnight = currentMinutes * 60 * 1000L + calendar.get(Calendar.SECOND) * 1000L
-            + calendar.get(Calendar.MILLISECOND)
-
-        mRealm.executeTransaction {
-            var activeAlarms = it.where(AlarmPeriod::class.java).equalTo("enabled", true).findAll()
-
-            if(activeAlarms.isEmpty()){
-                ret = -1L
-            } else{
-                // check if there are currently active alarms
-                var currentAlarms = activeAlarms.where()
-                    .lessThanOrEqualTo("startMinutes", currentMinutes)
-                    .and().greaterThanOrEqualTo("endMinutes", currentMinutes+2).findAll()
-                if(currentAlarms.isNotEmpty()){
-                    // alarm should be activated right away
-                    ret = 0L
-                }else{
-                    // check if there are any alarms starting later this day
-                    var nextAlarmsToday = activeAlarms.where().
-                        greaterThanOrEqualTo("startMinutes", currentMinutes).findAll()
-
-                    if(nextAlarmsToday.isNotEmpty()){
-                        nextAlarmsToday.sort("startMinutes", Sort.ASCENDING)
-                        var nextAlarm = nextAlarmsToday.first()
-                        if(nextAlarm != null){
-                            ret = currentMillis - millisSinceMidnight + 1000L * 60 * nextAlarm.startMinutes
-                        }
-                    }else{
-                        // no alarms today, get the first one starting tomorrow
-                        var nextAlarm = activeAlarms.sort("startMinutes", Sort.ASCENDING).first()
-                        if(nextAlarm != null){
-                            var timeLeftToday = (1440 - currentMinutes) * 1000L * 60
-                            ret = 1000L * 60 * nextAlarm.startMinutes + timeLeftToday + currentMillis
-                        }
-                    }
-                }
-            }
-        }
-        Log.d("MainActivity", "getNextAlarmMillis() ret: " + ret + ", currentMillis: " + currentMillis)
-        return ret
-    }
-
     /** Schedules AlarmService based on next available alarm period.
         If there are no enabled alarms, this method does nothing.
-        Uses Realm instance, so do not call inside RealmTransaction.
+        Uses Realm instance, so do not call this inside RealmTransaction.
      */
     private fun scheduleNextAlarm() {
-        val nextAlarmMillis = getNextAlarmMillis()
+        var currentMillis = Calendar.getInstance().timeInMillis
+        val nextAlarmMillis = Utils.getNextAlarmMillis(mRealm, currentMillis)
         if(nextAlarmMillis == 0L){
             startForegroundService(Intent(applicationContext, AlarmService::class.java))
         }
         else if(nextAlarmMillis > -1){
-            scheduleAlarmService(nextAlarmMillis)
+            Log.d(TAG, "scheduling service to start at " + nextAlarmMillis)
+            Utils.scheduleAlarmService(nextAlarmMillis, applicationContext)
         }
-    }
-
-    /** Schedules AlarmService to start at specified time.
-        Uses Realm instance, so do not call inside RealmTransaction.
-    */
-    private fun scheduleAlarmService(triggerAtMillis: Long){
-
-        Log.d("MainActivity", "scheduleAlarmService() at " + triggerAtMillis)
-
-        // keep only one alarm at a time, cancel previous one if it exists
-        var serviceIntent = Intent(applicationContext, AlarmService::class.java)
-        var pendingIntent = PendingIntent.getForegroundService(applicationContext,
-            GlobalVariables.ALARM_SERVICE_REQUEST_CODE, serviceIntent, PendingIntent.FLAG_CANCEL_CURRENT)
-
-        var alarmManager = applicationContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
     }
 
     // Starts AlarmService immediately

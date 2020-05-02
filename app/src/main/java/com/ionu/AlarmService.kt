@@ -20,54 +20,56 @@ import java.util.*
 
 class AlarmService : Service() {
 
+    val TAG : String = "AlarmService"
     private var mHandlerThread = HandlerThread("AlarmHandlerThread")
     private lateinit var mRealm : Realm
     private lateinit var mHandler : Handler
     private lateinit var mScreenReceiver : ScreenReceiver
-    private lateinit var mAlarms : RealmResults<AlarmPeriod>
     private lateinit var mPrefs : SharedPreferences
     private var mStartMillis = 0L
+    private var mAlarmPeriodViolated = false
 
 
     override fun onCreate() {
-        Log.d("AlarmService", "onCreate()")
+        Log.d(TAG, "service started")
         startForeground(GlobalVariables.FOREGROUND_NOTIFICATION_ID, getForegroundNotification())
-        mStartMillis = Calendar.getInstance().timeInMillis
-        Log.d("AlarmService", "start time: " + mStartMillis)
+        mStartMillis = System.currentTimeMillis()
+        Log.d(TAG, "start time: " + mStartMillis)
 
         mHandlerThread.start()
         mHandler = Handler(mHandlerThread.looper)
         mPrefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
         mRealm = Realm.getDefaultInstance()
 
-        var totalAlarmTimeMillis : Long = 0
-
-        mRealm.executeTransaction {
-            // find enabled alarms
-            mAlarms = it.where(AlarmPeriod::class.java).equalTo("enabled", true).findAll()
-        }
-
-        if(mAlarms.isNotEmpty()){
-            totalAlarmTimeMillis = 1000L * 60 * findTotalAlarmMinutes(mAlarms)
-
-            mAlarms.addChangeListener { _ ->
-                if(mAlarms.isEmpty()){
-                    Log.d("AlarmService", "no more active alarms, stopping service")
-                    mHandler.removeCallbacks(mStopService)
-                    stopSelf()
-                }else{
-                    // reschedule service end time
-                    var newAlarmTimeMillis = 1000L * 60 * findTotalAlarmMinutes(mAlarms)
-                    Log.d("AlarmService", "scheduling new service end " + newAlarmTimeMillis/1000 + " seconds from now")
-                    mHandler.removeCallbacks(mStopService)
-                    mHandler.postDelayed(mStopService, newAlarmTimeMillis)
-                }
+        /* Add change listener so that service will update it's end time etc.
+           when AlarmPeriods are edited. */
+        mRealm.addChangeListener {
+            var currentMillis = System.currentTimeMillis()
+            var totalPeriodMillis = getTotalAlarmMillis(mRealm, currentMillis)
+            if(totalPeriodMillis == 0L) {
+                Log.d(TAG, "no active alarms, stopping service")
+                mHandler.removeCallbacks(mStopService)
+                stopSelf()
+            } else{
+                // Schedule service to end when alarm is no longer active
+                Log.d(TAG, "scheduling new service end " + totalPeriodMillis/1000L + " seconds from now")
+                mHandler.removeCallbacks(mStopService)
+                mHandler.postDelayed(mStopService, totalPeriodMillis)
             }
         }
 
-        // Schedule service to end when alarm is no longer active
-        Log.d("AlarmService", "scheduling service end " + totalAlarmTimeMillis/1000 + " seconds from now")
-        mHandler.postDelayed(mStopService, totalAlarmTimeMillis)
+        var currentMillis = System.currentTimeMillis()
+        var totalPeriodMillis = getTotalAlarmMillis(mRealm, currentMillis)
+        if(totalPeriodMillis == 0L) {
+            Log.d(TAG, "no active alarms, stopping service")
+            mHandler.removeCallbacks(mStopService)
+            stopSelf()
+        } else{
+            // Schedule service to end when alarm is no longer active
+            Log.d(TAG, "scheduling new service end " + totalPeriodMillis/1000L + " seconds from now")
+            mHandler.removeCallbacks(mStopService)
+            mHandler.postDelayed(mStopService, totalPeriodMillis)
+        }
 
         mScreenReceiver = ScreenReceiver()
         val filter = IntentFilter().apply {
@@ -97,23 +99,24 @@ class AlarmService : Service() {
         when(action){
 
             GlobalVariables.ACTION_SCREEN_ON -> {
-                Log.d("AlarmService", "onStartCommand() screen on")
+                Log.d(TAG, "screen on")
                 // if service is still running without enabled alarms, shut it down
-                if(findTotalAlarmMinutes(mAlarms) == 0) {
+                var currentMillis = System.currentTimeMillis()
+                if(getTotalAlarmMillis(mRealm, currentMillis) == 0L) {
+                    mHandler.removeCallbacks(mStopService)
                     mHandler.post(mStopService)
                 }
-            }
-            GlobalVariables.ACTION_SCREEN_OFF -> {
-                Log.d("AlarmService", "onStartCommand() screen off")
             }
             GlobalVariables.ACTION_USER_PRESENT -> {
-                Log.d("AlarmService", "onStartCommand() user present")
+                Log.d(TAG, "user present")
                 // make sure there are currently active alarms before adding a violation
-                if(findTotalAlarmMinutes(mAlarms) == 0) {
-                    mHandler.post(mStopService)
-                } else {
-                    alarmPeriodViolated()
+                var currentMillis = System.currentTimeMillis()
+                if(getTotalAlarmMillis(mRealm, currentMillis) > 0L) {
+                    mAlarmPeriodViolated = true
+                    showViolationNotification()
                 }
+                mHandler.removeCallbacks(mStopService)
+                mHandler.post(mStopService)
             }
         }
         return START_STICKY
@@ -123,15 +126,24 @@ class AlarmService : Service() {
         TODO("Return the communication channel to the service.")
     }
 
+    /**
+     * Saves HistoryPeriod to Realm, schedules next service start and stops the service.
+     */
     private val mStopService = Runnable {
-        Log.d("AlarmService", "stopping service, no more alarms active")
-        val endMillis = Calendar.getInstance().timeInMillis
-        mRealm.executeTransaction {
-            it.insert(HistoryPeriod(mStartMillis, endMillis, true))
-            Log.d("AlarmService", "History period saved, start time " + mStartMillis
-                    + ", end time " + endMillis + ", successful: " + true)
+        Log.d(TAG, "stopping service, no violations")
+        val endMillis = System.currentTimeMillis()
+        var realm = Realm.getDefaultInstance()
+        realm.executeTransaction {
+            it.insert(HistoryPeriod(mStartMillis, endMillis, !mAlarmPeriodViolated))
+            Log.d(TAG, "History period saved, start time " + mStartMillis
+                    + ", end time " + endMillis + ", successful: " + !mAlarmPeriodViolated)
         }
-        // TODO schedule next alarm
+        // Update data stored in shared prefs (for History view)
+        updatePrefs(realm)
+        // schedule service to start again when next period is active
+        val nextStartMillis = Utils.getNextAlarmMillis(realm, endMillis)
+        realm.close()
+        Utils.scheduleAlarmService(nextStartMillis, applicationContext)
         this.stopSelf()
     }
 
@@ -143,26 +155,15 @@ class AlarmService : Service() {
             Log.d("AlarmService", "History period saved, start time " + mStartMillis
                 + ", end time " + endMillis + ", successful: " + false)
         }
-
         // let user know alarm was violated
-        val builder = NotificationCompat.Builder(this, GlobalVariables.MAIN_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(resources.getString(R.string.app_name))
-            .setContentText(resources.getString(R.string.notification_alarm_period_violated))
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.notify(GlobalVariables.ALARM_PERIOD_VIOLATED_NOTIFICATION_ID, builder.build())
-
-        // Update data stored in shared prefs
-        updatePrefs()
-        stopSelf()
+        showViolationNotification()
     }
 
     // Update data stored in shared prefs
-    private fun updatePrefs() {
-        updateAlltimeData(mPrefs, mRealm)
-        updateWeeklyData(mPrefs, Calendar.getInstance(), mRealm)
-        updateMonthlyData(mPrefs, Calendar.getInstance(), mRealm)
+    private fun updatePrefs(realm : Realm) {
+        updateAlltimeData(mPrefs, realm)
+        updateWeeklyData(mPrefs, Calendar.getInstance(), realm)
+        updateMonthlyData(mPrefs, Calendar.getInstance(), realm)
     }
 
     fun updateAlltimeData(prefs: SharedPreferences, realm: Realm) {
@@ -328,25 +329,33 @@ class AlarmService : Service() {
     }
 
 
-    /* Returns total alarm length using given RealmResults.
-       Length is given as minutes the combined alarm should last from current time.
-       If no alarms are currently active, returns 0
+    /**
+     * Returns combined length of currently active AlarmPeriods.
+     * Combined period starts from given time and ends when all overlapping,
+     * active periods starting after that are over (or there is a break in between alarms).
+     * If no alarms are currently active, returns 0.
+     * Do not call this if the given realm instance is already in transaction.
+     * @param realm Realm instance that contains the AlarmPeriods
+     * @param currentMillis Start time, from which the combined period is calculated
+     * @return combined length of overlapping periods (as millis), starting from currentMillis
      */
-    fun findTotalAlarmMinutes(alarms: RealmResults<AlarmPeriod>) : Int{
-        if(alarms.isEmpty()) return 0
+    fun getTotalAlarmMillis(realm : Realm, currentMillis : Long) : Long{
 
-        var totalAlarmMinutes = 0
+        var enabledAlarms = realm.where(AlarmPeriod::class.java).equalTo("enabled", true).findAll()
+        if(enabledAlarms.isEmpty()) return 0L
+
+        var totalAlarmMillis = 0L
 
         // get current time as the same minute representation as used in AlarmPeriod
         var calendar = Calendar.getInstance()
-        var currentMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
+        calendar.timeInMillis = currentMillis
+        var currentMinutes = calendar.get(Calendar.HOUR_OF_DAY)*60 + calendar.get(Calendar.MINUTE)
+        var leftoverMillis = calendar.get(Calendar.SECOND)*1000L + calendar.get(Calendar.MILLISECOND)
 
-        /**
-         * Use the minute format to calculate total length of current alarm session.
+        /* Use the minute format to calculate total length of current alarm session.
          * In case alarms go over midnight, use extended end time so they can be calculated properly
-         * (e.g. 22-03 is counted as 22-27).
-         */
-        var sortedAlarms = alarms.sort("startMinutes", Sort.ASCENDING)
+         * (e.g. 22-03 is counted as 22-27) */
+        var sortedAlarms = enabledAlarms.sort("startMinutes", Sort.ASCENDING)
 
         var alarmStart = 0
         var alarmEnd = 0
@@ -356,31 +365,43 @@ class AlarmService : Service() {
         var alarmsBeforeCurrentTime = 0
         var alarmsFound = false
         for(alarm : AlarmPeriod in sortedAlarms) {
-            if(alarm.startMinutes <= currentMinutes && alarm.endMinutes >= currentMinutes){
-                // index found, break
-                alarmsFound = true
-                break
-            }else{
-                alarmsBeforeCurrentTime++
+            if(alarm.startMinutes < alarm.endMinutes) {
+                if(alarm.startMinutes <= currentMinutes && currentMinutes < alarm.endMinutes) {
+                    alarmsFound = true
+                    break
+                } else {
+                    alarmsBeforeCurrentTime++
+                }
+            }
+            else if(alarm.endMinutes < alarm.startMinutes){
+                // period goes over midnight
+                if(currentMinutes < alarm.startMinutes && alarm.endMinutes < currentMinutes ) {
+                    alarmsBeforeCurrentTime++
+                } else {
+                    alarmsFound = true
+                    break
+                }
             }
         }
+
         if(!alarmsFound){
             // no alarm is currently active
-            return 0
+            return 0L
         }
 
         // add first alarm's length to total time
         val firstAlarm = sortedAlarms[alarmsBeforeCurrentTime]
         if(firstAlarm != null){
             if(firstAlarm.startMinutes > firstAlarm.endMinutes){
-                latestEndTime = firstAlarm.startMinutes + 1440
+                latestEndTime = firstAlarm.endMinutes + 1440
             }else{
                 latestEndTime = firstAlarm.endMinutes
             }
-            totalAlarmMinutes += latestEndTime - currentMinutes
+            totalAlarmMillis += (latestEndTime - currentMinutes)*60*1000L
         }
 
         // go through the rest of the alarms and keep adding to end time until there is a break in between alarms
+        alarmsBeforeCurrentTime++
         for(i in alarmsBeforeCurrentTime until sortedAlarms.size){
             // check if alarm goes over midnight and use extended end time if necessary
             var alarm = sortedAlarms[i]
@@ -397,12 +418,12 @@ class AlarmService : Service() {
             if(latestEndTime >= alarmStart) {
                 // only add to total time if no previous alarms had later end time
                 if(alarmEnd > latestEndTime){
-                    totalAlarmMinutes += alarmEnd - latestEndTime
+                    totalAlarmMillis += (alarmEnd - latestEndTime)*60*1000L
                     latestEndTime = alarmEnd
                 }
             }else{
                 // there is a break in between alarms, total alarm time ends here
-                return totalAlarmMinutes
+                return totalAlarmMillis - leftoverMillis
             }
 
         } //for
@@ -419,16 +440,16 @@ class AlarmService : Service() {
                 if(latestEndTime >= alarmStart) {
                     // only add to total time if no previous alarms had later end time
                     if(alarmEnd > latestEndTime){
-                        totalAlarmMinutes += alarmEnd - latestEndTime
+                        totalAlarmMillis += (alarmEnd - latestEndTime)*1000L*60
                         latestEndTime = alarmEnd
                     }
                 }else{
                     // there is a break in between alarms, total alarm time ends here
-                    return totalAlarmMinutes
+                    return totalAlarmMillis - leftoverMillis
                 }
             }
         }
-        return totalAlarmMinutes
+        return totalAlarmMillis - leftoverMillis
     }
 
     private fun getRemainingMinutes() : Int {
@@ -440,10 +461,20 @@ class AlarmService : Service() {
     private fun getForegroundNotification() : Notification {
         val builder = NotificationCompat.Builder(this, GlobalVariables.MAIN_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(resources.getString(R.string.app_name))
-            .setContentText(resources.getString(R.string.notification_alarms_active))
+            .setContentTitle(resources.getString(R.string.notification_title_alarms_active))
+            .setContentText(resources.getString(R.string.notification_content_alarms_active))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
         return builder.build()
+    }
+
+    private fun showViolationNotification() {
+        val builder = NotificationCompat.Builder(this, GlobalVariables.MAIN_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(resources.getString(R.string.notification_title_period_violated))
+            .setContentText(resources.getString(R.string.notification_content_period_violated))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.notify(GlobalVariables.ALARM_PERIOD_VIOLATED_NOTIFICATION_ID, builder.build())
     }
 
     // Updates the foreground notification with remaining alarm time.

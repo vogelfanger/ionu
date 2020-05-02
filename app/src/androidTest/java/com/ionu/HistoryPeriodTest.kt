@@ -16,8 +16,8 @@ import org.junit.Before
 import java.util.*
 
 /**
+ * Tests that history data is saved correctly to shared prefs.
  * Instrumented test, which will execute on an Android device.
- *
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 @RunWith(AndroidJUnit4::class)

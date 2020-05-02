@@ -2,7 +2,10 @@ package com.ionu
 
 import android.app.AlarmManager
 import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.util.Log
+import io.realm.Realm
 import io.realm.RealmResults
 import io.realm.Sort
 import java.util.*
@@ -11,19 +14,64 @@ class Utils{
 
     companion object {
 
-        /*
-           Schedules a PendingÍntent to happen at given time,
-           if no other intents are already scheduled before it.
-           If other intent is already scheduled for earlier time, this method does nothing.
-        */
-        fun ScheduleRCTAlarm(pendingIntent: PendingIntent,
-                             triggerAtMinutes: Int, alarmManager: AlarmManager){
+        /**
+         * Finds the time in millis when next AlarmPeriod should start. Do not call inside RealmTransaction.
+         * @param realm Realm where AlarmPeriods are searched from
+         * @param currentMillis Current time, next AlarmPeriod will be the one starting after this time.
+         * @return -1 if no enabled alarms were found,
+         *          0 if alarm should start right away,
+         *          or time in millis when next alarm starts.
+         */
+        fun getNextAlarmMillis(realm: Realm, currentMillis: Long) : Long{
+            var ret = -1L
+            var calendar = Calendar.getInstance()
+            calendar.timeInMillis = currentMillis
+            var currentMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
 
-            //TODO check previously scheduled alarm and replace it only if it has later start time
-            val triggerAtMillis = 1000L * 60 * triggerAtMinutes
+            calendar.set(Calendar.HOUR_OF_DAY, 0)
+            calendar.set(Calendar.MINUTE, 0)
+            calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+            var millisSinceMidnight = currentMillis - calendar.timeInMillis
+            calendar.add(Calendar.DAY_OF_MONTH, 1)
+            var millisToMidnight = calendar.timeInMillis - currentMillis
 
-            Log.d("IONU", "Scheduling new alarm")
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+            realm.executeTransaction {
+                var activeAlarms = it.where(AlarmPeriod::class.java).equalTo("enabled", true).findAll()
+
+                if(activeAlarms.isEmpty()){
+                    ret = -1L
+                } else{
+                    // check if there are currently active alarms
+                    var currentAlarms = activeAlarms.where()
+                        .lessThanOrEqualTo("startMinutes", currentMinutes)
+                        .and().greaterThanOrEqualTo("endMinutes", currentMinutes).findAll()
+                    if(currentAlarms.isNotEmpty()){
+                        // alarm should be activated right away
+                        ret = 0L
+                    }else{
+                        // check if there are any alarms starting later this day
+                        var nextAlarmsToday = activeAlarms.where().
+                            greaterThanOrEqualTo("startMinutes", currentMinutes).findAll()
+
+                        if(nextAlarmsToday.isNotEmpty()){
+                            var nextAlarmsTodaySorted = nextAlarmsToday.sort("startMinutes", Sort.ASCENDING)
+                            var nextAlarm = nextAlarmsTodaySorted.first()
+                            if(nextAlarm != null){
+                                ret = currentMillis - millisSinceMidnight + 1000L * 60 * nextAlarm.startMinutes
+                            }
+                        }else{
+                            // no alarms today, get the first one starting tomorrow
+                            var activeAlarmsSorted = activeAlarms.sort("startMinutes", Sort.ASCENDING)
+                            var nextAlarm = activeAlarmsSorted.first()
+                            if(nextAlarm != null){
+                                ret = currentMillis + millisToMidnight + 1000L * 60 * nextAlarm.startMinutes
+                            }
+                        }
+                    }
+                }
+            }
+            return ret
         }
 
         /**
@@ -137,6 +185,25 @@ class Utils{
 
             return alarmValid
         }
-    }
+
+        /**
+         * Schedules AlarmService to start at a specified time.
+         * If service was already scheduled to start at a different time,
+         * that previous scheduling will cancelled and new trigger time will be used instead.
+         * @param triggerAtMillis Time in millis when the service should start
+         * @param context Context used when creating intent to AlarmService
+         */
+        fun scheduleAlarmService(triggerAtMillis: Long, context : Context){
+
+            // keep only one alarm at a time, cancel previous one if it exists
+            var serviceIntent = Intent(context, AlarmService::class.java)
+            var pendingIntent = PendingIntent.getForegroundService(context,
+                GlobalVariables.ALARM_SERVICE_REQUEST_CODE, serviceIntent, PendingIntent.FLAG_CANCEL_CURRENT)
+
+            var alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+        }
+
+    } // companion object
 }
 
