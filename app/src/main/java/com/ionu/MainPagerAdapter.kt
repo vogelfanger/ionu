@@ -5,6 +5,9 @@ import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
 
+/**
+ * Adapter that manages fragments.
+ */
 class MainPagerAdapter(fm: FragmentManager, context: Context) : FragmentPagerAdapter(fm) {
 
     private val fragmentCount: Int = 2

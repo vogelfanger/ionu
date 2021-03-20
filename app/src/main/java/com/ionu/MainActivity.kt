@@ -1,34 +1,30 @@
 package com.ionu
 
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.support.design.widget.CoordinatorLayout
 import android.support.design.widget.Snackbar
 import android.support.design.widget.TabLayout
 
 import android.support.v4.app.FragmentTransaction
 import android.support.v4.view.ViewPager
-import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.TextView
 import io.realm.Realm
-import io.realm.RealmResults
-import io.realm.Sort
-import io.realm.internal.Util
 
 import kotlinx.android.synthetic.main.activity_main.*
-import java.util.*
 
+/**
+ * Activity class for the whole application.
+ */
 class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListener,
                         AlarmPeriodFragment.AlarmPeriodFragmentListener,
                         ViewPager.OnPageChangeListener{
 
-    val TAG : String = "MainActivty"
+    val TAG : String = "MainActivity"
     private lateinit var mViewPager: ViewPager
     private lateinit var mPagerAdapter: MainPagerAdapter
     private lateinit var mCoordinatorLayout: CoordinatorLayout
@@ -58,8 +54,6 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
             Realm.getDefaultInstance().use{
                 it.executeTransaction(Realm.Transaction {it.insert(alarm)})
             }
-            Snackbar.make(view, "New alarm saved", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
         }
     }
 
@@ -88,7 +82,6 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
         // update history view every time it's selected
         var page = mPagerAdapter.getItem(position)
         if(page is HistoryFragment) {
-            page.updateView(applicationContext)
             fab.hide()
         }else if(page is PageRootFragment) {
             fab.show()
@@ -199,8 +192,7 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
         Uses Realm instance, so do not call this inside RealmTransaction.
      */
     private fun scheduleNextAlarm() {
-        var currentMillis = Calendar.getInstance().timeInMillis
-        val nextAlarmMillis = Utils.getNextAlarmMillis(mRealm, currentMillis)
+        val nextAlarmMillis = Utils.getNextAlarmMillis(mRealm, System.currentTimeMillis())
         if(nextAlarmMillis == 0L){
             startForegroundService(Intent(applicationContext, AlarmService::class.java))
         }
@@ -209,10 +201,4 @@ class MainActivity : AppCompatActivity(), AlarmsFragment.OnAlarmsFragmentListene
             Utils.scheduleAlarmService(nextAlarmMillis, applicationContext)
         }
     }
-
-    // Starts AlarmService immediately
-    private fun startAlarmService(){
-        startForegroundService(Intent(applicationContext, AlarmService::class.java))
-    }
-
 }

@@ -9,8 +9,7 @@
     <string name="alarm_enabled_title">Enabled:</string>
     <string name="alarm_start_time_title">Start:</string>
     <string name="alarm_end_time_title">End:</string>
-    <string name="alarm_custom_message_title">Notification message:</string>
-    <string name="alarm_custom_message_hint">Add a custom message, be polite</string>
+    <string name="alarm_delete">Delete</string>
 
     <string name="card_text_info_ratio">Failures:</string>
     <string name="card_text_info_total_time">Total time:</string>
@@ -30,8 +29,5 @@
     <string name="notification_channel_description_main">Basic notifications, app will not work without these.</string>
 
     <string name="toast_alarm_time_invalid">Failed to set time, total time must not exceed 24h</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>

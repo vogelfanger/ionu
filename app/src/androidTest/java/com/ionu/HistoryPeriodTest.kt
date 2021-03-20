@@ -440,7 +440,9 @@ class HistoryPeriodTest {
         alarmService.updateMonthlyData(mPrefs, calendar, mTestRealm)
         Assert.assertEquals(lastCurrent + seventhPeriod.getLenght(), mPrefs.getLong(GlobalVariables.PREF_KEY_CURRENT_MONTH, 0L))
         Assert.assertEquals(lastMonthBest, mPrefs.getLong(GlobalVariables.PREF_KEY_BEST_MONTH, 0L))
+        mTestRealm.executeTransaction {
+            it.deleteAll()
+        }
     }
-
 }
 

@@ -7,6 +7,9 @@ import android.os.Build
 import io.realm.Realm
 import io.realm.RealmConfiguration
 
+/**
+ * Application class where Realm and notification channels are set.
+ */
 class Ionu : Application() {
 
     override fun onCreate() {

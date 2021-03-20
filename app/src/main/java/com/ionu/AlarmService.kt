@@ -14,10 +14,17 @@ import android.preference.PreferenceManager
 import android.support.v4.app.NotificationCompat
 import android.util.Log
 import io.realm.Realm
-import io.realm.RealmResults
 import io.realm.Sort
 import java.util.*
 
+/**
+ * Service that monitors device screen during alarm periods.
+ * Service remains active as long as there are active alarm periods
+ * and shuts itself when no more periods are active.
+ * When service shut's itself down, it will reschedule itself to start when the next
+ * alarm period becomes active.
+ * If user opens screen during an alarm period, a notification is displayed.
+ */
 class AlarmService : Service() {
 
     val TAG : String = "AlarmService"
@@ -147,6 +154,7 @@ class AlarmService : Service() {
         this.stopSelf()
     }
 
+    //TODO remove if no longer needed
     private fun alarmPeriodViolated() {
         val calendar = Calendar.getInstance()
         val endMillis = calendar.timeInMillis
@@ -166,6 +174,12 @@ class AlarmService : Service() {
         updateMonthlyData(mPrefs, Calendar.getInstance(), realm)
     }
 
+    /**
+     * Updates all-time history data based on alarm periods that were active during
+     * service's lifetime.
+     * @param prefs preferences where data will be saved
+     * @param realm Realm instance that contains alarm periods
+     */
     fun updateAlltimeData(prefs: SharedPreferences, realm: Realm) {
 
         var totalTime = 0L
@@ -192,6 +206,12 @@ class AlarmService : Service() {
         }
     }
 
+    /**
+     * Updates monthly history data based on alarm periods that were active during
+     * service's lifetime.
+     * @param prefs preferences where data will be saved
+     * @param realm Realm instance that contains alarm periods
+     */
     fun updateMonthlyData(prefs: SharedPreferences, calendar: Calendar, realm: Realm) {
 
         // get start of this month in milliseconds
@@ -260,6 +280,12 @@ class AlarmService : Service() {
         }
     }
 
+    /**
+     * Updates weekly history data based on alarm periods that were active during
+     * service's lifetime.
+     * @param prefs preferences where data will be saved
+     * @param realm Realm instance that contains alarm periods
+     */
     fun updateWeeklyData(prefs: SharedPreferences, calendar: Calendar, realm: Realm) {
 
         // get start of this week in milliseconds
@@ -330,12 +356,12 @@ class AlarmService : Service() {
 
 
     /**
-     * Returns combined length of currently active AlarmPeriods.
+     * Returns combined length of currently active alarm periods.
      * Combined period starts from given time and ends when all overlapping,
      * active periods starting after that are over (or there is a break in between alarms).
      * If no alarms are currently active, returns 0.
      * Do not call this if the given realm instance is already in transaction.
-     * @param realm Realm instance that contains the AlarmPeriods
+     * @param realm Realm instance that contains alarm periods
      * @param currentMillis Start time, from which the combined period is calculated
      * @return combined length of overlapping periods (as millis), starting from currentMillis
      */
@@ -477,6 +503,7 @@ class AlarmService : Service() {
         nm.notify(GlobalVariables.ALARM_PERIOD_VIOLATED_NOTIFICATION_ID, builder.build())
     }
 
+    //TODO remove if no longer needed
     // Updates the foreground notification with remaining alarm time.
     private fun updateNotificationTime() {
 

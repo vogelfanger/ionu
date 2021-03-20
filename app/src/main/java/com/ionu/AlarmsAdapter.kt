@@ -9,6 +9,9 @@ import android.widget.TextView
 import io.realm.OrderedRealmCollection
 import io.realm.RealmRecyclerViewAdapter
 
+/**
+ * List adapter for alarm periods.
+ */
 class AlarmsAdapter(private val mListener: OnAlarmItemClickListener,
                     private val mDataset : OrderedRealmCollection<AlarmPeriod>):
                         RealmRecyclerViewAdapter<AlarmPeriod, AlarmsAdapter.AlarmViewHolder>(

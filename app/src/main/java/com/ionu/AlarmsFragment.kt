@@ -14,34 +14,15 @@ import io.realm.Realm
 import io.realm.RealmRecyclerViewAdapter
 import kotlinx.android.synthetic.main.fragment_alarms.*
 
-
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM2 = "param2"
-
 /**
- * A simple [Fragment] subclass.
- * Activities that contain this fragment must implement the
- * [AlarmsFragment.OnFragmentInteractionListener] interface
- * to handle interaction events.
- * Use the [AlarmsFragment.newInstance] factory method to
- * create an instance of this fragment.
- *
+ * Fragment where alarm periods can be viewed and selected from a list.
  */
 class AlarmsFragment : Fragment(), AlarmsAdapter.OnAlarmItemClickListener {
-    // TODO: Rename and change types of parameters
-    private var param2: String? = null
+
     private var mListener: OnAlarmsFragmentListener? = null
     private lateinit var mRealm: Realm
     private lateinit var mRecyclerView: RecyclerView
     private lateinit var mViewAdapter: RealmRecyclerViewAdapter<AlarmPeriod, AlarmsAdapter.AlarmViewHolder>
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -70,10 +51,6 @@ class AlarmsFragment : Fragment(), AlarmsAdapter.OnAlarmItemClickListener {
     override fun onDestroyView() {
         super.onDestroyView()
         mRealm.close()
-    }
-
-    // TODO: Rename method, update argument and hook method into UI event
-    fun onButtonPressed(uri: Uri) {
     }
 
     override fun onAttach(context: Context) {
@@ -114,24 +91,5 @@ class AlarmsFragment : Fragment(), AlarmsAdapter.OnAlarmItemClickListener {
     override fun onAlarmTextClicked(item: AlarmPeriod) {
         // Show alarm details in another fragment, let activity handle fragment transaction
         mListener?.onAlarmSelected(item)
-    }
-
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment AlarmsFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param2: String) =
-            AlarmsFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM2, param2)
-                }
-            }
     }
 }

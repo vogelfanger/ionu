@@ -13,12 +13,14 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import io.realm.Realm
 
+/**
+ * Fragment where user can edit alarm periods.
+ */
 class AlarmPeriodFragment: Fragment(), TimePickerFragment.TimePickerListener {
 
     private lateinit var mSwitch : Switch
     private lateinit var mStartTime : TextView
     private lateinit var mEndTime : TextView
-    private lateinit var mMessageEditor : EditText
     private lateinit var mDeleteButton : Button
     private lateinit var mRealm : Realm
     private var mAlarmID : String
@@ -50,7 +52,6 @@ class AlarmPeriodFragment: Fragment(), TimePickerFragment.TimePickerListener {
         mSwitch = view.findViewById(R.id.alarm_enabled_switch)
         mStartTime = view.findViewById(R.id.alarm_start_time_interaction_view)
         mEndTime = view.findViewById(R.id.alarm_end_time_interaction_view)
-        mMessageEditor = view.findViewById(R.id.alarm_custom_message_edit_text)
         mDeleteButton = view.findViewById(R.id.alarm_delete_button)
 
         mRealm = Realm.getDefaultInstance()
@@ -63,7 +64,6 @@ class AlarmPeriodFragment: Fragment(), TimePickerFragment.TimePickerListener {
                 mSwitch.isChecked = it.enabled
                 mStartTime.text = it.startTimeAsString()
                 mEndTime.text = it.endTimeAsString()
-                mMessageEditor.setText(it.message)
             }
         }
 
@@ -77,28 +77,6 @@ class AlarmPeriodFragment: Fragment(), TimePickerFragment.TimePickerListener {
 
         mEndTime.setOnClickListener{
             TimePickerFragment().show(childFragmentManager, endTimePickerTag)
-        }
-
-        // TODO might want to add onFocusChangeListener or something to make editing easier (not working with SwiftKey)
-        mMessageEditor.setOnEditorActionListener { view, actionId, event ->
-            return@setOnEditorActionListener when (actionId) {
-                EditorInfo.IME_ACTION_DONE -> {
-                    // save changes to Realm
-                    mRealm.executeTransaction {
-                        mAlarmPeriod?.let{
-                            it.message = view.text.toString()
-                            Log.d("AlarmPeriodFragment", "custom message saved: " + it.message)
-                        }
-                    }
-                    // hide keyboard
-                    context?.let {
-                        val imm = it.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                        imm.hideSoftInputFromWindow(view.windowToken, 0)
-                    }
-                    true
-                }
-                else -> false
-            }
         }
 
         mDeleteButton.setOnClickListener{
@@ -130,7 +108,6 @@ class AlarmPeriodFragment: Fragment(), TimePickerFragment.TimePickerListener {
         mListener = null
     }
 
-    //TODO test verifying, check if Realm transaction should be moved from here to Activity as well
     override fun onPickerTimeSet(hours: Int, minutes: Int, fragmentTag: String) {
         Log.d("AlarmPeriodFragment", "onPickerTimeSet")
         var timeChanged = false

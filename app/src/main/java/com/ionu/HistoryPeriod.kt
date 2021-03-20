@@ -27,7 +27,7 @@ open class HistoryPeriod() : RealmObject() {
         this.successful = successful
     }
 
-    public fun getLenght() : Long {
+    fun getLenght() : Long {
         return endMillis - startMillis
     }
 }

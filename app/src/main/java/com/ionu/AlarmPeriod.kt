@@ -30,6 +30,10 @@ open class AlarmPeriod() : RealmObject() {
         this.endMinutes = validateTime(endMinutes)
     }
 
+    /**
+     * Returns lenght of AlarmPeriod as minutes.
+     * @return alarm period's lenght as minutes
+     */
     fun lengthInMinutes() : Int{
         if(startMinutes > endMinutes){
             return 1440-startMinutes+endMinutes
@@ -38,16 +42,28 @@ open class AlarmPeriod() : RealmObject() {
         }
     }
 
+    /**
+     * Returns string representation of AlarmPeriod's start and end times.
+     * @return start and end times of AlarmPeriod
+     */
     fun clockTimesAsString() : String{
         return startTimeAsString() + " - " +  endTimeAsString()
     }
 
+    /**
+     * Returns string representation of AlarmPeriod's start time.
+     * @return start time of AlarmPeriod
+     */
     fun startTimeAsString() : String{
         val startHour : Int = startMinutes/60
         val startMinute : Int = startMinutes-(startHour*60)
         return ("" + timeToString(startHour) + ":" + timeToString(startMinute))
     }
 
+    /**
+     * Returns string representation of AlarmPeriod's end time.
+     * @return end time of AlarmPeriod
+     */
     fun endTimeAsString() : String{
         val endHour : Int = endMinutes/60
         val endMinute : Int = endMinutes-(endHour*60)

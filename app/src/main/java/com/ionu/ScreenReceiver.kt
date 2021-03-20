@@ -5,6 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 
+/**
+ * BroadcastReceiver for receiving screen-related intents.
+ */
 class ScreenReceiver: BroadcastReceiver() {
 
     override fun onReceive(context: Context?, intent: Intent?) {
@@ -20,7 +23,6 @@ class ScreenReceiver: BroadcastReceiver() {
                         .setAction(GlobalVariables.ACTION_SCREEN_ON))
                 }
             }
-            //TODO inform service that user opened screen during alarm
             Intent.ACTION_USER_PRESENT -> {
                 Log.d("ScreenReceiver", "user present")
                 context?.let {
@@ -28,16 +30,6 @@ class ScreenReceiver: BroadcastReceiver() {
                         .setAction(GlobalVariables.ACTION_USER_PRESENT))
                 }
             }
-            //TODO inform service that screen went off during alarm
-            Intent.ACTION_SCREEN_OFF -> {
-                Log.d("ScreenReceiver", "screen off")
-                context?.let {
-                    it.startService(Intent(context, AlarmService::class.java)
-                        .setAction(GlobalVariables.ACTION_SCREEN_OFF))
-                }
-            }
         }
     }
-
-
 }

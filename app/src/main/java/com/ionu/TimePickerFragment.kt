@@ -9,6 +9,9 @@ import android.support.v4.app.FragmentManager
 import android.widget.TimePicker
 import java.util.*
 
+/**
+ * Fragment where time can be selected for alarm periods.
+ */
 class TimePickerFragment : DialogFragment(), TimePickerDialog.OnTimeSetListener {
 
     lateinit var mListener : TimePickerListener
