@@ -53,6 +53,14 @@ class HistoryFragment : Fragment(), SharedPreferences.OnSharedPreferenceChangeLi
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if(activity != null) {
+            var parent = activity as AppCompatActivity
+            updateView(parent.applicationContext)
+        }
+    }
+
     override fun onSharedPreferenceChanged(p0: SharedPreferences?, p1: String?) {
 
         if(p1.equals(GlobalVariables.PREF_KEY_ALLTIME_TOTAL_TIME) ||
