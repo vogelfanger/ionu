@@ -34,3 +34,12 @@ jobs:
         run: |
           echo Add other actions to build,
           echo test, and deploy your project.
+          
+      # Clean build folder
+      - name: Clean build directory
+        run: ./gradlew clean
+        
+      # Build APK
+      - name: Build APK
+        run: ./gradlew build
+        
