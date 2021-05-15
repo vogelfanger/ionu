@@ -35,6 +35,10 @@ jobs:
           echo Add other actions to build,
           echo test, and deploy your project.
           
+      # Build machine needs permision to use gradlew
+      - name: Make gradlew executable
+      run: chmod +x ./gradlew
+          
       # Clean build folder
       - name: Clean build directory
         run: ./gradlew clean
