@@ -37,7 +37,7 @@ jobs:
           
       # Build machine needs permision to use gradlew
       - name: Make gradlew executable
-      run: chmod +x ./gradlew
+        run: chmod +x ./gradlew
           
       # Clean build folder
       - name: Clean build directory
